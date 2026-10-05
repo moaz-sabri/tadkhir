@@ -1,0 +1,31 @@
+# One checkout, one set of bytes.
+#
+# Without this file, `core.autocrlf=true` on a Windows checkout rewrites every
+# text file's line endings in the WORKING TREE, and the repository's own tests
+# read those working-tree files. One assertion in tests/build.test.mjs is
+# anchored to the end of a line — `rewrite … break;$` — so on Windows the
+# carriage return sat between the semicolon and the `$` and the test failed on a
+# file whose committed content is correct. A test suite that fails only on the
+# operating system it was written on trains people to ignore it.
+#
+# `text=auto eol=lf` makes the repository's canonical form LF everywhere: files
+# are normalised on commit, and checked out as LF on every platform. The rules
+# below pin the exceptions by hand, because `auto` cannot know what it is
+# looking at.
+
+* text=auto eol=lf
+
+# The Windows image of the PHP built-in server is launched from a batch file,
+# and a CRLF is what batch reads.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Everything below is binary and must never be touched by a newline conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.sqlite binary

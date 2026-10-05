@@ -1,0 +1,54 @@
+{
+    "name": "tadkhir",
+    "version": "1.3.0",
+    "description": "A simple, local-first personal application for everyday tasks, sessions, expenses, subscriptions, debts, and things to revisit.",
+    "license": "AGPL-3.0-or-later",
+    "private": true,
+    "license": "AGPL-3.0-or-later",
+    "author": {
+        "name": "TAM — Sabri",
+        "url": "https://moazsabri.org"
+    },
+    "homepage": "https://github.com/moaz-sabri/tadkhir#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/moaz-sabri/tadkhir.git"
+    },
+    "bugs": {
+        "url": "https://github.com/moaz-sabri/tadkhir/issues"
+    },
+    "keywords": [
+        "local-first",
+        "pwa",
+        "offline-first",
+        "personal-organizer",
+        "time-tracking",
+        "expense-tracking",
+        "privacy",
+        "self-hosted"
+    ],
+    "type": "module",
+    "engines": {
+        "node": ">=20"
+    },
+    "scripts": {
+        "build:assets": "webpack --mode production",
+        "build": "npm run build:assets",
+        "dev": "npm run build:assets && php -d enable_post_data_reading=0 -S 127.0.0.1:8080 -t app docker-router.php",
+        "test": "npm run test:client && npm run check:i18n && npm run test:api",
+        "test:client": "node --test tests/*.test.mjs",
+        "check:i18n": "node tools/check-i18n.mjs",
+        "test:api": "php api/tests/run.php"
+    },
+    "devDependencies": {
+        "copy-webpack-plugin": "^14.0.0",
+        "css-loader": "^7.1.5",
+        "css-minimizer-webpack-plugin": "^8.0.0",
+        "html-webpack-plugin": "^5.6.8",
+        "mini-css-extract-plugin": "^2.10.2",
+        "sass": "^1.104.1",
+        "sass-loader": "^17.0.1",
+        "webpack": "^5.111.1",
+        "webpack-cli": "^7.2.3"
+    }
+}

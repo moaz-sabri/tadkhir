@@ -1,0 +1,54 @@
+# NOTICE
+
+Tadkhir
+Copyright (C) 2026 TAM — Sabri (https://moazsabri.org)
+
+## Attribution
+
+This notice exists so that the origin of this software is never ambiguous.
+
+- **Original author and copyright holder:** TAM — Sabri <https://moazsabri.org>
+- **Licence:** GNU Affero General Public License v3.0 or later — SPDX identifier
+  `AGPL-3.0-or-later`. The full text is in [`LICENSE`](LICENSE); the reason AGPL
+  was chosen over MIT or GPL-3.0 is stated in the README under *License*.
+  The AGPL is the GPL v3 with one section added, and it is the **only** licence
+  covering this work. Do not redistribute it under GPL-3.0, MIT, or any other
+  identifier, alone or paired: two licences for one work contradict each other,
+  and the more permissive one is the one that gets enforced.
+- **Repository:** <https://github.com/moaz-sabri/tadkhir>
+
+## What you must keep
+
+The AGPL requires that recipients of the software receive this licence and keep
+these notices. If you distribute Tadkhir, modified or unmodified, keep this file,
+`LICENSE`, and the attribution above intact.
+
+You do **not** have to:
+
+- use the upstream name or branding,
+- ask permission before forking, modifying, or redistributing,
+- open a pull request before publishing a fork,
+- contribute changes back to the upstream repository.
+
+Those are permissions, not obligations. What the licence obligates is the
+licence text and the copyright notice; everything else about how you run,
+brand, or sell your version is yours.
+
+## Third-party code
+
+Tadkhir has **no runtime dependencies and no bundled third-party code.** Every
+build-time dependency in `devDependencies` is MIT-licensed and is installed from
+the npm registry at build time rather than redistributed here. There are no
+external fonts, icon sets, or images loaded at runtime, and no third-party
+network requests of any kind.
+
+`app/icons/` is generated from geometry defined in `tools/make-icons.py` and the
+checked-in SVG files; it originates in this repository.
+
+## Contributions
+
+Contributions are accepted under the same terms, and each contributor keeps
+copyright in their own contribution while licensing it to everyone else under
+AGPL-3.0-or-later. The commit history is part of this project's record and is
+kept intact: contributors are credited by name and by commit. See
+[`CONTRIBUTING.md`](CONTRIBUTING.md).

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Tadkhir">
+  <rect width="64" height="64" fill="#000"/>
+  <!-- The mark: an open ring with a solid dot in its gap. Same constants as
+       tools/make-icons.py — centre (32,34), radius 17, stroke 6.4, a 52-degree
+       gap centred on straight up, and a 5.6 dot riding at the ring's radius.
+       No stroke-linecap: the rasteriser cuts the arc ends flat, so the default
+       butt cap is what keeps the two from drifting apart. -->
+  <path d="M39.452 18.721A17 17 0 1 1 24.548 18.721" fill="none" stroke="#fff" stroke-width="6.4"/>
+  <circle cx="32" cy="17" r="5.6" fill="#fff"/>
+</svg>

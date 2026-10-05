@@ -1,0 +1,91 @@
+<!doctype html>
+<!-- THE TEMPLATE, NOT THE PAGE. This file is the source of the app shell and it
+     deliberately names no stylesheet and no script: `npm run build` (webpack)
+     emits app/dist/index.html with the content-hashed names of the assets that
+     same build produced, and that generated file — not this one — is what the
+     server hands out for `/`, `/index.html` and every SPA fallback.
+
+     So the served HTML can only ever reference an asset that exists, a rebuild
+     is the only way to change what the page loads, and there is no second file
+     to forget. Do not add <link> or <script src> tags here. -->
+<html lang="en"
+      dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color"
+          content="#000000">
+    <!-- Standalone mode. `mobile-web-app-capable` is what Chrome and Android read
+         and `apple-mobile-web-app-capable` is the iOS spelling; each engine reads
+         exactly one of the two and ignores the other, so both are here and the
+         manifest covers everyone else.
+         `apple-mobile-web-app-title` is what a home-screen icon is NAMED on iOS:
+         without it the installed icon is called "Safari", which is the one place
+         the app stops being called its own name. -->
+    <meta name="mobile-web-app-capable"
+          content="yes">
+    <meta name="apple-mobile-web-app-title"
+          content="Tadkhir">
+    <meta name="apple-mobile-web-app-capable"
+          content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style"
+          content="black">
+    <!-- The SHORTER of the two policies this app ships: this one, and the one the
+         servers send (api/index.php, docker-router.php, both nginx configs). It
+         must stay a subset of those, because a browser that gets both applies
+         the INTERSECTION — so a directive added here and not there makes the
+         stricter of the two win, which is the safe direction but a confusing
+         one to debug.
+
+         Two differences from the servers' copy, both load-bearing:
+         `img-src` and `media-src` carry `blob:` because every attachment is
+         rendered from a Blob URL built in the page (IndexedDB is the only place
+         a captured photograph exists), and `form-action` is 'self' rather than
+         'none' because the Web Share Target is a form POST — a manifest share
+         target that can carry files is POST/multipart, and 'none' would block
+         the one navigation the app's most-used entry point depends on. -->
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+    <link rel="manifest"
+          href="/manifest.webmanifest">
+    <link rel="icon"
+          href="/icons/favicon.svg"
+          type="image/svg+xml">
+    <link rel="apple-touch-icon"
+          href="/icons/apple-touch-icon.png">
+    <!-- /dist/app.<hash>.css is injected here by the build. -->
+    <title>Tadkhir</title>
+</head>
+<body>
+    <!-- The shell. The header carries the name and ONE navigation control — the
+         button that opens the whole list of sections — and the page below it is
+         the router's to fill.
+
+         There is deliberately no bottom bar. It used to hold six destinations
+         beside a header that offered the same eleven, and its labels had to be
+         shrunk, clipped and finally dropped to fit a 360px phone; what it bought
+         was a shorter path to five screens and a second place for the order of
+         the other six to live. One door, in the header, at every width, and the
+         floor given to the page. -->
+    <header class="site-header"><a class="brand"
+           href="/"
+           data-link>Tadkhir</a>
+        <nav id="top-nav"
+             aria-label="Main"></nav>
+    </header>
+    <main id="app"
+          tabindex="-1"></main>
+    <!-- The add control: one button, floating above whatever the active-session
+         bar is currently occupying, so recording something is one tap from
+         anywhere and never more than two from the session it belongs to. -->
+    <div id="add-root"></div>
+    <div id="session-strip"
+         class="session-strip-root"
+         hidden></div>
+    <div id="dialog-root"></div>
+    <div id="toast-root"
+         aria-live="polive"></div>
+    <!-- /dist/app.<hash>.js is injected here by the build. -->
+</body>
+</html>

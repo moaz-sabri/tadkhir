@@ -1,0 +1,12 @@
+# Build output and vendored dependencies — not source, never formatted.
+node_modules/
+app/dist/
+package-lock.json
+
+# Generated assets. `node tools/make-icons.py` writes these; they are committed
+# so a checkout is installable without Python, but they are not hand-edited.
+app/icons/
+
+# Minified output that ships inside the image.
+*.min.js
+*.min.css

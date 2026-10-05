@@ -1,0 +1,32 @@
+/*
+  # The short policy, and it must stay in step with the meta tag in
+  # app/index.html: a browser that receives both applies the intersection, so
+  # blob: in img-src/media-src and form-action 'self' are what let an
+  # attachment render and let the share target's form POST through. See the
+  # comment on that tag for the full reasoning.
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  # The same Permissions-Policy the other three deployments send. Camera and
+  # microphone are scoped to this origin because the note form records audio and
+  # video through getUserMedia; the other four features stay refused outright.
+  # Sending nothing here would have been a fourth, different answer to the same
+  # question — and a browser reads no header as "allowed", not as "ask me".
+  Permissions-Policy: camera=(self), microphone=(self), geolocation=(), payment=(), usb=()
+
+# The build emits /dist/app.<hash>.js and /dist/app.<hash>.css: the name carries
+# the hash of the content, so a year of caching is safe and a rebuild reaches
+# every client on its next load. These two patterns cannot match the shell below
+# or anything else, which is why they are written per extension instead of as
+# one `/dist/*` rule that would swallow the shell.
+/dist/*.js
+  Cache-Control: public, max-age=31536000, immutable
+/dist/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+# The shell names the hashed assets, so a stored copy of it is an app loading an
+# old bundle. It is revalidated on every load.
+/dist/index.html
+  Cache-Control: no-store, must-revalidate
+/sw.js
+  Cache-Control: no-store, must-revalidate

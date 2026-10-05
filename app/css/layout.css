@@ -1,0 +1,336 @@
+/* Layout: the page frame and everything that changes shape with the screen.
+ *
+ * CSS cannot share a media query between two files, so the whole scale is
+ * written down once in tokens.css and this file repeats only the values it
+ * needs. A test (tests/ui.test.mjs) reads that comment and fails on any other
+ * value, so the two files cannot drift apart.
+ *
+ * The floating pieces — the add button, the session chip, the toast, the dialog —
+ * repeat the same values in components.css, because they have to move with the
+ * frame and cannot inherit its queries.
+ */
+
+/* ---- Header ---- */
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    min-height: var(--header-h);
+    /* Physical insets, because safe-area insets are physical: a notch is on the
+       left in one direction and on the right in the other. */
+    padding: 8px calc(var(--gutter) + var(--sar)) 8px calc(var(--gutter) + var(--sal));
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+/* A small white mark so the header reads as a brand rather than a link, and so
+   the top-left of every screen has something to anchor the eye. */
+.brand::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    flex: none;
+    border-radius: 3px;
+    background: var(--fg);
+}
+
+/* ---- Header: the one navigation control ----
+ *
+ * There is no destination strip and no bottom bar. There were: a scrolling tab
+ * strip from 1024px up holding all eleven destinations, a fixed bar below that
+ * holding six of them plus a More row, and a More sheet for the rest — three
+ * renderings of one list, which is why the bar's labels had to be shrunk, then
+ * clipped, then dropped entirely below 360px, and why a priority order this long
+ * was only ever visible in pieces.
+ *
+ * A door is the honest shape. It costs the same width on a 360px phone as on a
+ * 1440px desktop, so there is no breakpoint here at all, and the order — which is
+ * the thing that carries the priority — is stated in full the first time it is
+ * opened instead of implied by which labels survived the truncation.
+ */
+.site-header nav {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+}
+
+.site-header nav .btn {
+    /* Below --tap on purpose, and only here: this is one control in a header, not
+       a row of them, and matching it to the body text's rhythm is what keeps the
+       header from looking like a toolbar laid over the page. The tap target is
+       still --tap tall — see the padding below — so nothing about it is hard to
+       press. */
+    min-height: var(--tap);
+    padding: 6px 12px;
+    font-size: 14px;
+    gap: var(--sp-2);
+}
+
+.site-header nav .nav-menu-icon {
+    width: var(--icon);
+    height: var(--icon);
+    flex: none;
+}
+
+.site-header nav .btn[aria-current=true] {
+    color: var(--bg);
+    background: var(--fg);
+}
+
+/* ---- Main ---- */
+
+main {
+    width: min(var(--measure), 100%);
+    margin-inline: auto;
+    /* The bottom padding clears the add button, and the add button's own offset
+       already includes the active-session bar's measured height — so the last row
+       of a list is clear of both without either of them knowing about the other.
+       `--fab-h` is the button, `--bar-h` is what the session bar takes off the
+       bottom edge, which is 0 without a session and 0 on a wide screen where that
+       bar floats beside the content instead of sitting on the bottom edge. */
+    padding: var(--sp-5) calc(var(--gutter) + var(--sar))
+        calc(var(--fab-h) + var(--bar-h) + var(--sab) + var(--sp-6)) calc(var(--gutter) + var(--sal));
+}
+
+/* Programmatic focus after a navigation must not draw a ring around the whole
+   page — the heading that just changed is the feedback. */
+.view:focus,
+.view:focus-visible,
+main:focus,
+main:focus-visible {
+    outline: none;
+}
+
+/* The router hands every page its own container, so a mount that is still
+   awaiting when a newer navigation arrives can only write into a node nobody is
+   looking at. It stays a plain block: full width, no margin, no box of its own. */
+.view {
+    display: block;
+    min-width: 0;
+}
+
+/* ---- Page and section scaffolding ---- */
+
+.page {
+    display: grid;
+    gap: var(--gap);
+    align-content: start;
+    align-items: start;
+    min-width: 0;
+}
+
+/* A page that is one screen: the head keeps its own height and everything below
+ * it takes the rest, so the content can be sized against the screen rather than
+ * against the length of its own words.
+ *
+ * The minimum height is the viewport less everything `main` is not this page's to
+ * draw: the sticky header, `main`'s own padding above, and the padding below that
+ * clears the add button and the session bar. Written as the subtraction it is
+ * rather than as a constant, because those two clearances are the ones that change
+ * while the page is open.
+ *
+ * It comes out a few pixels UNDER what `main` leaves rather than exact — `main`
+ * tightens its padding by 8px at each of its two ends — and that is deliberate in
+ * one direction only. A page built to fill the screen should never become a page
+ * that scrolls, so the rounding error is spent on height the page does not claim,
+ * and no media query restates the arithmetic to win back 8px nobody can see. */
+.page-tall {
+    grid-template-rows: auto 1fr;
+    align-content: stretch;
+    /* `stretch`, and not the `start` every other page uses: the row below the head
+       is the one that fills the screen, and a grid item aligned to the start of
+       its row is sized by its own content instead — which is how a page built to
+       take the whole viewport ends up with a strip of tiles in the top half of
+       it and 200px of nothing underneath. */
+    align-items: stretch;
+    min-block-size: calc(100dvh - var(--header-h)
+        - (var(--fab-h) + var(--bar-h) + var(--sab) + var(--sp-5) + var(--sp-6)));
+}
+
+.section {
+    display: grid;
+    gap: var(--sp-3);
+    min-width: 0;
+}
+
+/* A bare section heading: the grey caption that names a group of rows. It is a
+   class rather than a selector on `.section > h2` because a direct-child
+   selector could not see a heading nested inside a section header — and seven
+   of them were silently rendering at browser-default h2 size, next to seven that
+   rendered as the intended caption, on identical containers. The style itself
+   lives in components.css with the rest of the kit. */
+.section-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    /* A caption is a sentence in Arabic and a phrase in English, and the header it
+       sits in now holds its action in a fixed column beside it: without this the
+       long ones push the action off the line rather than wrapping inside their own. */
+    overflow-wrap: anywhere;
+}
+
+/* The glyph in a caption, and anything else beside the words. Fixed, so a caption
+   that wraps does not take its icon down to the second line with it. */
+.section-title .icon {
+    flex: none;
+}
+
+.title {
+    font-size: clamp(1.5rem, 5.2vw, 2.1rem);
+    letter-spacing: -0.02em;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* A stack of cards that becomes two columns once there is width for it. A single
+   1100px-wide card of four short figures is mostly empty space between them; two
+   cards of 550px put the figures next to each other. */
+.card-grid {
+    display: grid;
+    gap: var(--gap);
+    grid-template-columns: 1fr;
+    min-width: 0;
+}
+
+@media (min-width: 1024px) {
+    .card-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* A plain flex line. Most screens use `.row-actions` or `.toolbar` instead, which
+   say what the line is for; this stays for the loose cases. */
+.row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+/* ---- Home ---- */
+
+/* The glance is NOT capped at a narrower measure than the frame's, and used to be.
+ *
+ * It was 46rem rather than the full 1180 on the argument that a handful of short
+ * answers spread over 1180px leaves a figure like "1,770.50" alone in 570px of
+ * black and a list row's two action buttons a screen away from its title. What it
+ * actually got instead was a section header with its action BESIDE the caption, so
+ * the two ends of every line were never aligned with each other in the first place.
+ * With the header putting its action at the far end (see `.section-head`), the full
+ * measure puts the figures four to a row and each row's actions a thumb from its
+ * title.
+ *
+ * There is no rule left here for this screen, and that is the change: it is the
+ * app's page, it is the app's measure, and `main` centres it.
+ */
+
+/* ---- The menu ---- */
+/* One block per layer inside the header's sheet and on /more. The layers are
+   separated by whitespace and a caption rather than by boxes: the sheet is
+   already inside a dialog, and boxing each group inside a box is what turns a
+   list into a set of panels. */
+.menu-section {
+    display: grid;
+    gap: var(--sp-2);
+    min-width: 0;
+}
+
+/* Tighter rows inside the sheet than in a list you read. Not a density decision:
+   the menu's rows are eleven single-word destinations you tap once and leave, and
+   at the list's own 16px of padding above and below they need a screen and a bit
+   to be written out — which turns "one tap to any section" into "a tap, and
+   sometimes a scroll". A scroll in a menu is a menu that has been re-thought.
+ */
+.dialog-body .menu-section .list-row {
+    padding-block: var(--sp-3);
+}
+
+@media (max-width: 639px) {
+    main {
+        padding-top: var(--sp-4);
+    }
+}
+
+/* ---- The add button ----
+ *
+ * Fixed at the bottom corner, above the session bar. Two reasons it floats rather
+ * than sitting in the flow: the same control then works from every screen instead
+ * of only from the one that happens to hold it, and it is the one thing worth
+ * reaching for without reading the page first.
+ *
+ * The offset is `--fab-h` rather than a number because the button's height is
+ * `--fab-h` too, and the page's bottom padding in the rule above adds the same
+ * value — so the last row of a list clears the button without either of them
+ * naming the other's size.
+ */
+.fab-root {
+    position: fixed;
+    z-index: 26;
+    inset-inline-end: calc(var(--sa-end) + var(--gutter));
+    bottom: calc(var(--sab) + var(--sp-4) + var(--bar-h));
+    /* The button is an icon-only control, and its size comes from the square-target
+       token so the shape that draws it (52px) and the two offsets that have to
+       clear it (this bottom, and `main`'s padding) cannot disagree. Set here, on
+       the wrapper, because `.btn.icon-only` is what decides an icon-only control's
+       size and it is written later in the cascade than this file — a `width` on
+       `.fab` would lose to it and the button would quietly be 44px. */
+    --btn-square: var(--fab-h);
+}
+
+/* Written as `.fab-root .fab` and not as `.fab`, and the extra class is load-bearing
+   rather than tidy: `.btn` lives in the other file, which the bundle emits first,
+   and two rules of one class each are decided by which comes later — so a plain
+   `.fab` loses its own radius and its own padding to `.btn` and the floating
+   button is drawn as an ordinary button in the corner. */
+.fab-root .fab {
+    /* A CIRCLE, and nothing but the glyph. The button is fixed in the corner of
+       every screen, so it is the one control on a page that is never read as part
+       of that page — and a word beside the plus was a caption in the corner of
+       eleven screens, in two languages, saying the same thing the shape already
+       says. */
+    min-block-size: var(--fab-h);
+    padding: 0;
+    border-radius: 50%;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.15s ease;
+}
+
+/* One press, one small answer. The scale is 1.5% rather than the 3.5% the session
+   stage uses, because this control is pressed a hundred times a day and the
+   movement has to be felt rather than watched. */
+.fab:active:not(:disabled) {
+    transform: scale(0.985);
+}
+
+/* On a phone held in one hand the button belongs under the thumb, and on a wide
+   screen it belongs out of the way of the content's right edge rather than in the
+   middle of a column of figures. The same corner does both, because the content
+   is left-aligned inside the measure and the corner is past its end. */
+@media (min-width: 1024px) {
+    main {
+        padding-bottom: calc(var(--fab-h) + var(--bar-h) + var(--sab) + var(--sp-5));
+    }
+}

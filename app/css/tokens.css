@@ -1,0 +1,195 @@
+/* Design tokens.
+ *
+ * Three colours carry the whole interface, and nothing else is allowed in:
+ * black for the ground, white for everything the user reads or taps, and grey
+ * for the things that exist only to hold the page together — hairlines between
+ * sections, the dimmer second level of text, and the soft shadow that lifts a
+ * card off the black. A screen is a stack of black, white and grey, so every
+ * page reads as the same surface no matter which one is open.
+ *
+ * One red is kept, for destructive actions and failures only. It is a signal,
+ * not a theme: it is never used for decoration.
+ */
+
+:root {
+    color-scheme: dark;
+
+    /* ---- Surfaces: the ground is black, greys only ever lift ---- */
+    --bg: #000;
+    --surface: #0b0b0b;
+    --surface-2: #121212;
+    --surface-3: #1a1a1a;
+
+    /* ---- Ink: white is content, greys are the supporting levels ---- */
+    --fg: #fff;
+    --fg-dim: #b4b4b4;
+    --fg-mute: #7d7d7d;
+    --fg-faint: #545454;
+
+    /* ---- Lines: what separates one section from the next ---- */
+    --line-soft: #161616;
+    --line: #1e1e1e;
+    --line-strong: #333;
+
+    /* ---- The soft grey shadow ---- */
+    --shadow-sm: 0 1px 2px rgba(255, 255, 255, 0.045);
+    --shadow-md: 0 12px 32px -14px rgba(255, 255, 255, 0.1);
+    --shadow-lg: 0 28px 64px -24px rgba(255, 255, 255, 0.16);
+
+    --danger: #ff6b5e;
+    --focus: #fff;
+
+    /* ---- Space: 4px base, fluid only where a screen can actually vary ---- */
+    --sp-1: 4px;
+    --sp-2: 8px;
+    --sp-3: 12px;
+    --sp-4: 16px;
+    --sp-5: 24px;
+    --sp-6: 32px;
+    --gap: clamp(12px, 2.4vw, 20px);
+
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 18px;
+    --radius-pill: 999px;
+
+    --tap: 44px;
+    --header-h: 56px;
+    /* The add button's height. It is a token rather than a number written at the
+     * three places that have to agree — the button, its offset from the bottom of
+     * the viewport, and the page padding that clears it — because a control whose
+     * size lives in two of them is a control that one of them will eventually
+     * disagree with. */
+    --fab-h: 52px;
+
+    /* ---- Icon sizes -------------------------------------------------------
+     *
+     * One ladder, three steps, and every icon in the app is one of them. The set
+     * is drawn on a single 24×24 grid at a single stroke weight (see
+     * ui/icons.js), so what changes between these three is only how much of the
+     * screen the shape occupies — never how heavy it looks. Sizing an icon
+     * ad-hoc at a call site is how a nav bar ends up with a 19px clock next to
+     * a 24px bookmark.
+     */
+    --icon-sm: 16px;   /* inside a badge, next to a caption */
+    --icon: 20px;      /* in a control, in a row, in a nav item */
+    --icon-lg: 24px;   /* on a large target, an empty state, a stat */
+
+    /* Square target for a control whose only content is an icon. Same 44px as
+       every other tappable thing, so a row of four icon buttons is four times
+       as easy to hit as a row of four 28px glyphs. */
+    --btn-square: var(--tap);
+
+    /* ---- The drag ghost's own position ----
+     *
+     * A MEASURED pair, written at runtime by ui/components/kanban-drag.js as the
+     * card's offset on screen, and read by `.kanban-ghost` as the base its
+     * transform is measured from. Declared here, at zero, because a custom
+     * property that only ever appears inside `var()` is invisible to anything
+     * reading the stylesheet for what it uses: a search for `--ghost-x` finds no
+     * declaration and cannot tell a deliberate value from a typo that will render
+     * the ghost at the top-left corner of the page.
+     *
+     * The transform stays the only thing that changes during a drag. Writing
+     * `top`/`left` per pointermove forces a layout of the whole board on every
+     * frame; a transform is composited and costs nothing.
+     */
+    --ghost-x: 0px;
+    --ghost-y: 0px;
+
+    /* How tall the floating active-session bar currently is, 0 when there is no
+       session.
+
+       A MEASURED value, written at runtime by ui/components/session-strip.js and
+       read by everything else fixed to the bottom of the viewport: the toast, the
+       add button, and the page's own bottom padding. Three things stack there, in
+       that order, and none of them knows the other's size — so all three add this
+       one number, and it has to be measured rather than guessed: the bar's height
+       depends on its own content (the name is one line or two) and on the
+       viewport (a docked bar and a floating card are different heights). */
+    --bar-h: 0px;
+
+    /* ---- The responsive scale ---------------------------------------------
+     *
+     * CSS cannot share a breakpoint between two files, so the whole scale is
+     * written down here and every `@media` in the app uses one of these values
+     * and nothing else. They appear in layout.css and components.css — the
+     * floating pieces have to move with the page frame, so they cannot inherit
+     * its queries — which is exactly why the list belongs in one place. A test
+     * (tests/ui.test.mjs) reads this comment and fails on any other value, so a
+     * new breakpoint has to be given a reason here rather than typed at a call
+     * site.
+     *
+     *   min-width 400px    two short figures fit side by side
+     *   min-width 480px    two cards fit side by side
+     *   min-width 640px    a second content column is possible
+     *   min-width 1024px   a third stat column fits, and the session page puts its
+     *                      stage beside the work rather than above it
+     *
+     *   max-width 1023px   the 1024 band's upper edge (the chip's docked layout)
+     *   max-width  639px   the 640 band's upper edge (a phone's tighter padding)
+     *   max-width  479px   a phone: rows stack, fields stack, controls wrap
+     *   max-width  359px   too narrow for a word beside a glyph anywhere, so the
+     *                       decorative one goes
+     *
+     *   max-height 560px, landscape — a phone on its side has about 360px of
+     *                         height to read in, and a session stage sized for it
+     *                         needs the width rather than the height it has.
+     *
+     * There is deliberately no step above 1024px. The page frame is capped at
+     * 1180px, so a card inside it never gets wider than about 580px and a fourth
+     * column of figures has nowhere to go.
+     */
+    --bp-two: 400px;
+    --bp-cards: 480px;
+    --bp-cols: 640px;
+    --bp-wide: 1024px;
+    --bp-short: 560px;
+
+    --gutter: clamp(14px, 4vw, 28px);
+    --measure: 1180px;
+
+    /* Safe areas, zeroed where the platform reports nothing so the calc()
+       fallbacks elsewhere collapse to the plain value on a desktop browser. */
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", "Segoe UI Arabic", sans-serif;
+    font-synthesis-weight: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+
+    /* ---- Two direction-dependent resolutions ----
+     *
+     * Both exist because the layout is written logically (inline-start /
+     * inline-end) while the platform and the CSS `direction` property are not,
+     * and getting that wrong is invisible in English and obvious in Arabic.
+     */
+
+    /* Where "the start of the line" is, as a value text-align can take.
+     *
+     * A number or an amount needs `direction: ltr`, so that a value like
+     * "12.00 / 30.00" is not reordered by the Arabic layout. But `direction`
+     * also decides what `text-align: start` means for that element — so on an
+     * LTR-forced number inside an Arabic page, `start` silently became left and
+     * every figure was pushed to the wrong side of the line. Resolving the
+     * alignment here, from the document's direction, keeps the digits LTR and
+     * the position correct. */
+    --align-start: left;
+
+    /* The safe-area insets above are physical, and the logical edge they belong
+     * to depends on the direction. A rule that pins something to the
+     * inline-start edge adds --sa-start; one that pins it to the inline-end edge
+     * adds --sa-end. Either way the value is the inset on the side the element
+     * is actually on, so a rail clears a notch in both languages. */
+    --sa-start: var(--sal);
+    --sa-end: var(--sar);
+}
+
+:root[dir="rtl"] {
+    --align-start: right;
+    --sa-start: var(--sar);
+    --sa-end: var(--sal);
+}

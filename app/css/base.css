@@ -1,0 +1,406 @@
+/* Base: the reset, the type scale, form controls, and the handful of
+   single-purpose utility classes the pages lean on. Layout lives in
+   layout.css, everything reusable lives in components.css. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+html {
+  /* Dark scrollbars on every platform that honours them, so the gutter beside
+       the page never flashes a light bar on a black ground. */
+  color-scheme: dark;
+  scrollbar-color: var(--line-strong) var(--bg);
+}
+
+body {
+  min-height: 100dvh;
+  /* Fills the width the scrollbar takes away, so the fixed header, bottom nav
+       and dialogs line up with the content instead of being 15px wider. */
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
+
+section > * + * {
+  margin-bottom: var(--sp-3);
+}
+
+::selection {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* While the first-run flow is up, the app's own chrome is not.
+
+   The navigation is empty at that point — the router has not started, so there
+   is no current page for it to mark — and an empty navigation beside a welcome
+   screen is a visible piece of an app that has not been set up yet. The add
+   button is hidden for a better reason: it offers to record something, and the
+   screen still asking its questions has not been answered yet. The class is
+   on <body> because the header, the button and the page container are siblings
+   of #app and cannot be reached from inside it; ui/components/onboarding.js owns
+   it and takes it off when the user is through. */
+body.is-onboarding .site-header,
+body.is-onboarding .fab-root {
+  display: none;
+}
+
+/* And the page's bottom padding drops back to the ordinary one, so the flow is
+   not left with a 52px band of dead space under a button that is not drawn. */
+body.is-onboarding main {
+  padding-bottom: var(--sp-6);
+}
+
+/* The scrollbar gutter is always reserved, not only when the page overflows, so
+   a navigation that changes the page height does not shift the layout sideways.
+   `stable` falls back to `auto` where it is not supported, which is the old
+   behaviour and still correct — just without the guarantee. */
+@supports (scrollbar-gutter: stable) {
+  html {
+    scrollbar-gutter: stable;
+  }
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button,
+a {
+  color: inherit;
+}
+
+button {
+  min-height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  /* Long-press on a label or a row must not pop the iOS callout menu over a
+       control the user is trying to tap. */
+  -webkit-touch-callout: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* The focus ring is drawn on the element, but a white ring on a white-filled
+   primary button is invisible, so it flips to black there. */
+.btn.primary:focus-visible,
+.icon-option input:focus-visible + .icon-face {
+  outline-color: var(--bg);
+}
+
+/* ---- Type ---- */
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+  margin-bottom: var(--sp-3);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  line-height: 1.25;
+  /* Arabic needs a little more leading than Latin to keep the diacritics from
+       colliding with the line below it. */
+  line-height: 1.35;
+}
+
+/* ---- Form controls ---- */
+
+input,
+textarea,
+select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--tap);
+  padding: 10px 12px;
+  font-size: 16px;
+  background: var(--surface-2);
+  color: var(--fg);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  /* Colour on the focus ring, not a browser default, so it stays grey. */
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--fg-faint);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--fg-mute);
+  background: var(--surface-3);
+}
+
+/* A date/datetime control paints its own picker indicator, which is a black
+   glyph on a black field on some engines. */
+input[type="date"],
+input[type="datetime-local"] {
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  /* The field is already white-on-grey, so the indicator is inverted to keep
+       the native look consistent instead of a dark ghost on a dark control. */
+  filter: invert(1);
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+input[type="date"]:hover::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]:hover::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--fg);
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+select {
+  /* The arrow is drawn as an icon, not painted on: a `linear-gradient` pinned
+       to `100%` is the *physical* right edge, so on an Arabic page the arrow sat
+       on the side the reader does not start from. A bare <select> therefore has
+       no arrow at all — every one in the app is wrapped in `.select` (see
+       selectControl() in ui/components/fields.js), which supplies both the
+       padding for it and the icon itself. */
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+input[type="file"] {
+  padding: 8px;
+  cursor: pointer;
+}
+
+/* Inside a flex row a control must be allowed to shrink, or the global
+   `width: 100%` pushes its siblings onto the next line. Every row in the app
+   puts a control next to a button or a select, so the rule belongs here rather
+   than being repeated at each call site. */
+.row > input,
+.row > select,
+.row > textarea {
+  flex: 1 1 10rem;
+  width: auto;
+}
+
+/* ---- Labels and hints ---- */
+
+label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* The visible caption of a field. A `<span class="label">` sits inside the
+   `<label>` element, which is the grid; this is the caption inside that. It is
+   always this element and never a bare text node — a form whose captions were
+   plain text rendered at browser-default size and weight, beside fields on the
+   same screen carrying the grey micro-caption, which is the kind of difference
+   that only shows up once you have seen both. */
+.label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+
+.muted {
+  color: var(--fg-dim);
+}
+
+.bold {
+  font-weight: 600;
+}
+
+.small {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---- Direction ---- */
+
+/* Icons that point somewhere *relative to the reader* rather than to the page —
+   "back", "forward", the chevron, "undo" — carry `icon-flip` from the registry,
+ * and the mirror is applied HERE, keyed on the document's direction.
+ *
+ * Keying it on `dir` rather than in JavaScript is the whole point: the language
+ * is chosen at runtime and changes the `dir` attribute with it, so a rule that
+ * reads it needs no re-render, and one that does would leave the arrows pointing
+ * the old way until the next mount. The `back` arrow is the case that matters —
+ * it has to lead out of a detail screen towards where the reader came from, and
+ * the other way round in Arabic. */
+:root[dir="rtl"] .icon-flip {
+  transform: scaleX(-1);
+}
+
+/* ---- Touch ---- */
+
+/* `manipulation` is `auto` with one thing removed: the browser no longer waits to
+   see whether a second tap is a pinch or a double-tap zoom before delivering the
+   first one. Panning and pinch-zoom inside a control are untouched, so scrolling
+   and text fields behave exactly as they did — only the delay goes. On a page of
+   44px-tall controls that delay is the difference between a tap and a "did that
+   work?", and it is the single largest thing that makes a web page feel unlike
+   the app it is pretending to be. */
+a,
+button,
+[role="button"],
+label,
+summary {
+  touch-action: manipulation;
+}
+
+/* A control is not text to be selected, and a long press on one is a gesture the
+   app has its own meaning for — so holding a finger on a button must not paint it
+   blue on the way there. Deliberately NOT applied to `a`: a link is still
+   something a person may want to select, and nothing here is gained by taking
+   that away. Fields keep their own selection, because there the text IS the
+   value. */
+button,
+[role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* A finger is not a mouse. 44px is what this app has always offered and it is
+   the smallest target a thumb can be relied on to hit; where the pointer actually
+   IS a finger, the platform's own guidance is 48, and the four pixels are the
+   difference between a hit and a miss on a row of four icon buttons at the end of
+   a long list. The desktop value is untouched, so nothing about the layout a
+   mouse user sees has changed. */
+@media (pointer: coarse) {
+  :root {
+    --tap: 48px;
+  }
+}
+
+/* ---- Numbers ---- */
+
+/* Times, money and counters read as a column of figures: LTR, tabular digits,
+   no wrapping, and never reordered by the Arabic layout.
+   `text-align` is set rather than left to inherit, because the LTR direction
+   these need would otherwise make an inherited `start` mean left — which on an
+   Arabic page pushed every figure to the wrong side of its line. See
+   --align-start in tokens.css. */
+.number,
+.money {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: var(--align-start);
+  font-variant-numeric: tabular-nums;
+}
+
+.money {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+input.money-input,
+input.datetime-input {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Names, titles and any other text the user wrote ---- */
+
+/* A user's own words are in whatever language they wrote them in, and this app
+   has two languages, so most of them are in the OTHER one: an English task name
+   inside an Arabic screen, or the reverse.
+
+    `.own-text` gives such a label a base direction from its OWN first strong
+    character instead of inheriting the page's. That is what decides where a
+    clipped name is elided, and the difference is not cosmetic — an English name
+    inside an RTL card was truncated at its BEGINNING, the ellipsis landing before
+    the first word, because `text-overflow` follows the base direction. The name
+    read as if it had been cut short at the front rather than at the end.
+
+    Deliberately NOT `direction: ltr`: the name's language is not known, and
+    forcing LTR would move the ellipsis to the wrong side for an Arabic name on an
+    English screen — the same bug, inverted.
+
+    `text-align: start` then resolves against the label's own direction, so the
+    text still lines up with the row around it.
+
+    Applied to TRUNCATED names only. A label with room to wrap has no ellipsis to
+    put in the wrong place, and mixing two base directions inside one row is a
+    different set of problems. */
+.own-text {
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+
+/* ---- Accessibility helpers ---- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

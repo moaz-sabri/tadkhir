@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Tadkhir">
+  <rect width="64" height="64" fill="#000"/>
+  <!-- A maskable icon is cropped to a circle of 80% of its area, so the mark is
+       scaled to 0.78 about the centre rather than filling the canvas. The group
+       carries the scale, so the geometry below stays the same constants the
+       rasteriser uses: centre (32,34), radius 17, stroke 6.4, a 52-degree gap
+       centred on straight up, and a 5.6 dot at the ring's radius. 32 * 0.22
+       = 7.04 is the offset that recentres a 0.78 scale about (32,32). -->
+  <g transform="translate(7.04 7.04) scale(0.78)">
+    <path d="M39.452 18.721A17 17 0 1 1 24.548 18.721" fill="none" stroke="#fff" stroke-width="6.4"/>
+    <circle cx="32" cy="17" r="5.6" fill="#fff"/>
+  </g>
+</svg>

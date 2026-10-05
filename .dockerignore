@@ -1,0 +1,29 @@
+# Keep the build context small, and keep anything private out of it. The build
+# stage runs `npm ci` and `npm run build`, and the `test` stage runs
+# `npm run test:client` — so the source, `tests/`, and every file the test
+# suite reads as text (including this file and .gitignore) MUST stay in the
+# context. `tests/build.test.mjs` and `tests/security.test.mjs` assert against
+# the contents of `.dockerignore` and `.gitignore`; dropping either one makes
+# them fail with ENOENT inside the image.
+
+.git
+node_modules
+npm-debug.log*
+*.log
+
+# Never bake a developer's real configuration into an image.
+.env
+.env.*
+api/config.local.php
+
+# Runtime data: the sync database and parked share uploads. `api/var` is the one
+# entry here that is load-bearing — the php stage does `COPY api ./api`, so this
+# exclusion is the only thing keeping a host's ciphertext out of the image.
+api/var
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Long-form documentation. Not needed to build, test, or serve.
+*.md

@@ -1,0 +1,18 @@
+# Chooser shown on the "New issue" page. Without it, GitHub lists every
+# template side by side with no hint about which one to pick, and a security
+# report is the one thing that must never end up in a public thread.
+#
+# Blank issues stay enabled on purpose: a contributor who has read both
+# templates and still needs to ask something should not have to squeeze it into
+# one of them.
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability — do not file a public issue
+    url: https://moazsabri.org
+    about: Goes straight to the maintainer, privately. Read SECURITY.md first.
+  - name: Question about using, installing, or hosting Tadkhir
+    url: https://github.com/moaz-sabri/tadkhir/discussions
+    about: How-do-I questions, hosting, and self-hosting belong in Discussions.
+  - name: Contributing
+    url: https://github.com/moaz-sabri/tadkhir/blob/master/CONTRIBUTING.md
+    about: The review criterion, the fork-and-pull-request flow, and what a pull request needs.

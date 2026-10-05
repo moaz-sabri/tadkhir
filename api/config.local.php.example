@@ -1,0 +1,51 @@
+<?php
+
+// Copy this file to config.local.php and adjust as needed.
+// config.local.php is gitignored — never commit real secrets.
+//
+// Preferred deployment: the app and the API on the SAME origin. Sessions use
+// an HttpOnly SameSite=Lax cookie (Secure in production), so no secret is
+// shared with the frontend at all — see README.md → Architecture.
+//
+// You can also set the same values as environment variables
+// (DATABASE_PATH, ALLOWED_ORIGIN, ENVIRONMENT, PULL_BATCH, ...).
+return [
+    // Optional overrides:
+    // 'db_path'           => __DIR__ . '/var/sync.sqlite',
+    // 'environment'       => 'production',
+    // 'session_lifetime'  => 86400,          // 24h
+    // 'cookie_secure'     => true,           // auto: true in production
+    // 'allowed_origin'    => 'https://your-app.example.com',  // only for cross-origin frontends
+
+    // ---- security knobs (every one has a working default) ----
+    //
+    // 'password_algo'   => 'argon2id',  // argon2id | bcrypt; auto-detected when unset.
+    //                                      bcrypt truncates silently at 72 bytes, so
+    //                                      leave this alone unless the build has no
+    //                                      libargon2.
+    // 'max_password_bytes' => 1024,     // longest accepted password. A ceiling, not a
+    //                                      policy: it is what makes the bcrypt fallback
+    //                                      behave like argon2id instead of ignoring
+    //                                      everything past byte 72.
+    //
+    // 'rate_max'          => 10,        // FAILED auth/open per IP per window. A
+    // 'rate_max_create'   => 20,        // number of auth/open ATTEMPTS per IP per
+    // 'rate_window'       => 900,       // window. Two budgets on purpose: create
+    //                                      hashes a password on every call whether or
+    //                                      not the space exists, so metering it by
+    //                                      failures never trips.
+    // 'max_spaces'              => 10000,
+    // 'max_auth_sessions_per_space' => 32,  // live cookies per space
+    // 'max_devices_per_space'   => 8,
+    // 'max_device_label_len'    => 120,
+    //
+    // 'hsts_max_age' => 0,   // 0 sends no Strict-Transport-Security header, which is
+    //                        // what you want while the origin is plain HTTP: the header
+    //                        // is cached by the browser and would break every later
+    //                        // plain-HTTP request to the same host. Set it to 31536000
+    //                        // once HTTPS actually terminates in front of this API.
+    //
+    // 'request_max_bytes' => 1048576,   // must match nginx client_max_body_size AND
+    //                                   // PHP post_max_size (docker/php/php.ini), or
+    //                                   // the SAPI buffers a body the app refuses.
+];

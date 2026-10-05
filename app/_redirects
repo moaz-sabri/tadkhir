@@ -1,0 +1,6 @@
+/* /index.html is not a file: the served shell is the build's output at
+   /dist/index.html, and every route resolves to it. The 200 rewrite is the SPA
+   fallback, and the target has to be the built shell — the app/index.html at the
+   root of this directory is the TEMPLATE the build reads, which names no
+   stylesheet and no script.
+/*  /dist/index.html  200

@@ -1,0 +1,114 @@
+name: CI
+
+# Regression protection only. This workflow never deploys anything.
+#
+# Every step below is a command the project already runs locally (see README →
+# Testing, and PLAYBOOK §7). Nothing here is CI-specific, so a failure means the
+# working tree is broken, not that the pipeline disagrees with it.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# Read-only. Nothing in this workflow writes to the repository, and nothing
+# needs a token beyond reading the checkout.
+permissions:
+  contents: read
+
+# A newer push to the same branch makes an in-flight run pointless.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Tests, i18n, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22 is what the Dockerfile builds with (node:22-alpine), so CI runs
+      # the same version the image does rather than a second one that could
+      # behave differently. package.json requires >= 20.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      # PHP 8.5 is what the php image runs (php:8.5-fpm-alpine). The API suite
+      # needs pdo_sqlite and mbstring at runtime and proc_open to boot its own
+      # server; all three are what the image already has.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: mbstring, pdo_sqlite
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The build runs BEFORE the client tests on purpose. Four assertions in
+      # tests/build.test.mjs read app/dist/ and skip themselves when it is
+      # absent, so testing first would quietly run 608 of 612 with 4 skipped.
+      # Building first is what makes the full 612 mean something.
+      - name: Production build
+        run: npm run build
+
+      - name: Client tests
+        run: npm run test:client
+
+      - name: i18n validation
+        run: npm run check:i18n
+
+      - name: API tests
+        run: npm run test:api
+
+      # npm test chains the three above; this asserts the build output is a
+      # releasable artifact rather than merely a build that did not throw.
+      - name: Check build output
+        run: |
+          set -euo pipefail
+          test -f app/dist/index.html
+          test "$(find app/dist -maxdepth 1 -name 'app.*.js' | wc -l)" -eq 1
+          test "$(find app/dist -maxdepth 1 -name 'app.*.css' | wc -l)" -eq 1
+          # The generated shell may only reference assets this build emitted.
+          for asset in $(grep -o '/dist/app\.[0-9a-f]\{8\}\.\(js\|css\)' app/dist/index.html); do
+            test -f "app$asset" || { echo "shell references a missing asset: $asset"; exit 1; }
+          done
+          echo "build output OK: $(ls app/dist | tr '\n' ' ')"
+
+  docker:
+    name: Docker verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Not a duplicate of the `verify` job: this runs the client tests on
+      # node:22-alpine inside the image, which is the only place the suite has
+      # ever run on Alpine. It is how a Node-22-only failure in a test that
+      # waits on a timer was found — the same suite passed on the runner's Node.
+      - name: Build and run the test image
+        run: docker build --target test .
+
+      # Both images, the way `docker compose up --build` builds them.
+      - name: Compose config
+        run: docker compose config --quiet
+
+      - name: Compose build
+        run: docker compose build
+
+      # The real nginx parser. No test can do this: tests/build.test.mjs reads
+      # default.conf as text, so an unquoted `{8}` quantifier is a plain string
+      # to it and a startup failure to nginx. It has to be the real binary.
+      - name: nginx config check
+        run: docker compose run --rm --entrypoint nginx web -t
+
+      # NOTE: deploy/hosting-nginx.conf is NOT validated here. It is a template
+      # full of {{panel}} placeholders for a specific hosting product, so nginx
+      # cannot parse it until those are filled in on that host. It stays part of
+      # release verification, and tests/build.test.mjs compares it against the
+      # container config as text. See README → Hosting without Docker.

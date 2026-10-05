@@ -1,0 +1,3577 @@
+﻿/* Components: the reusable pieces. Black ground, white ink, grey for the
+ * hairlines and the soft shadow that lifts a card off the page.
+ *
+ * Every rule here belongs to a piece of the shared kit in
+ * js/ui/components/ui.js and js/ui/components/fields.js. A screen is assembled
+ * out of those pieces, so a change to a row or a button lands on all of them at
+ * once â€” which is the point of the kit, and the reason no page carries a
+ * private override of a class defined below.
+ *
+ * The three orientation rules near the end repeat the breakpoints from
+ * layout.css on purpose: the floating pieces have to move with the frame, so
+ * they cannot inherit its media queries. The five values they use are written
+ * down once in tokens.css.
+ */
+
+/* ---- Icons ----
+ *
+ * The sizing ladder lives in tokens.css and is applied here, once, in three
+ * steps, so an icon is the same size wherever it appears. `flex: none` matters
+ * more than the width: an icon in a flex row is otherwise a flex item that
+ * shrinks, and the first character of the label next to it gets pushed out of
+ * the control. A component picks its step by class and never sets a size, so
+ * there is exactly one place where "how big is a 20px icon" is decided.
+ */
+
+.icon {
+    width: var(--icon);
+    height: var(--icon);
+    flex: none;
+    /* The stroke is drawn on the edge of the viewBox, so without this the shape
+     * is a pixel narrower than its box and looks small beside text of the same
+     * size. */
+    overflow: visible;
+}
+
+.icon-sm {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+}
+
+.icon-lg {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+}
+
+/* Icons that point somewhere *relative to the reader* rather than to the page
+ * carry `icon-flip` from the registry; the mirror itself is a one-line rule in
+ * base.css keyed on `dir`, so it cannot be applied in the wrong language. */
+
+/* ---- Buttons ---- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    min-height: var(--tap);
+    padding: 9px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    color: var(--fg);
+    background: var(--surface-2);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+/* The icon inside a control is drawn at the same size everywhere, but the
+   padding around it is what makes the control wider than its word, so a
+   control with an icon and one without line up on the same row. */
+.btn-icon {
+    width: var(--icon);
+    height: var(--icon);
+}
+
+.btn:hover:not(:disabled) {
+    background: var(--surface-3);
+    border-color: var(--fg-faint);
+}
+
+.btn:active:not(:disabled) {
+    background: var(--surface);
+}
+
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Filled white: the one action a screen is asking for. At most one per view. */
+.btn.primary {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+    font-weight: 600;
+}
+
+.btn.primary:hover:not(:disabled) {
+    background: var(--fg-dim);
+    border-color: var(--fg-dim);
+}
+
+.btn.primary:active:not(:disabled) {
+    background: #e6e6e6;
+    border-color: #e6e6e6;
+}
+
+/* Destructive. Kept inside the monochrome scheme on purpose â€” the border is the
+   signal, not a fill, so a row of buttons does not turn into a row of red. */
+.btn.danger {
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+}
+
+.btn.danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    border-color: var(--danger);
+}
+
+/* No border and no fill: for a second line of actions, or a control that sits on
+   a card already carrying one. */
+.btn.quiet {
+    background: none;
+    border-color: transparent;
+}
+
+.btn.quiet:hover:not(:disabled) {
+    background: var(--surface-2);
+    border-color: var(--line);
+}
+
+.btn.block {
+    width: 100%;
+}
+
+/* A square control whose only content is an icon.
+ *
+ * This is the workhorse of the list rows, and it exists because a row of four
+ * text buttons is a row of four words: in Arabic they are wider, they wrap, and
+ * the row's title ends up sharing a line with its own controls. An icon plus a
+ * square target is the same information in 44px instead of 90px, which is what
+ * lets a row hold four actions on a 320px screen. The word is not lost â€” it is
+ * the aria-label and the tooltip, added by rowAction() in ui.js. */
+.btn.icon-only {
+    width: var(--btn-square);
+    min-width: var(--btn-square);
+    padding: 0;
+}
+
+/* ---- Cards and panels ---- */
+
+/* The unit of grouping. A grey hairline and a soft grey shadow are the only
+   things that lift a card off the black â€” no second background colour is
+   needed for that, and using one would break the single-surface look. */
+.card,
+.panel {
+    display: grid;
+    gap: var(--sp-4);
+    min-width: 0;
+    padding: clamp(16px, 3.5vw, 24px);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+/* The error line under a form field.
+ *
+ * It exists in the DOM from the start, because `role="status"` has to be there
+ * before the text arrives for the announcement to be picked up. That means it
+ * must take up no space and draw no border while it is empty â€” otherwise every
+ * field on every form showed an empty red-outlined box, which read as a
+ * validation failure the user had not caused yet. */
+.field-error {
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--danger);
+    border: 0 solid transparent;
+    border-radius: var(--radius-sm);
+}
+
+.field-error:not(:empty) {
+    padding: var(--sp-2) var(--sp-3);
+    border-width: 1px;
+    border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+/* A one-line strip of key figures, under a title. */
+.stats {
+    padding: var(--sp-4);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+/* ---- Page frame ----
+ *
+ * One header shape for every screen, with an inline-start slot and an inline-end
+ * slot. The eight pages used to have three different header structures between
+ * them, and a "New" link, a "Back" button, a filter and a dialog opener all
+ * landed in the same place by accident rather than by design.
+ */
+
+.page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.page-head-main {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+}
+
+.page-head-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+}
+
+/* The glyph beside a page title. Bigger than an in-control icon and dimmer, so
+   it identifies the screen without competing with its heading. */
+/* Section heading: the grey caption that names a group of rows. Applied as a
+   class rather than selected as `.section > h2`, because a direct-child selector
+   could not see a heading nested in a section header â€” and seven of them were
+   silently rendering at browser-default h2 size next to seven that were not. */
+/* A caption and, at the far end of the line, the one control that opens the screen
+ * the caption is about.
+ *
+ * TWO COLUMNS, not `space-between` on a flex line. Both put the action at the end
+ * of the row, and only one of them keeps it there: `flex-wrap` drops the action to
+ * a second line the moment a caption is long enough, and it drops it to the START
+ * of that line, so a stack of section heads is a column of captions beside a column
+ * of actions that suddenly become a ragged left margin. A grid with `1fr auto` gives
+ * the caption the room and the action exactly what it needs, on one line, at every
+ * width — so the two ends of the line are always aligned with each other and a
+ * screen of these reads as a table of captions with a column of doors.
+ *
+ * A head with no action is the first column alone, which is the same place a
+ * captioned head puts it. `pageSection()` builds exactly these two children and
+ * nothing else, so no third thing has a column to land in. */
+.section-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+}
+
+/* A captioned control in the page header's action slot â€” the reports period is
+   the only one of these, and it used to be a bare `label.row` holding a word and
+   a select, which is why it looked nothing like the "New" button that sits in
+   the same slot on every other screen. */
+.head-filter {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+}
+
+.head-filter .select {
+    min-width: 8rem;
+}
+
+/* ---- Lists ---- */
+
+.list {
+    display: grid;
+    gap: 0;
+    min-width: 0;
+}
+
+/* Rows are separated by a hairline rather than by gaps, so a long list reads as
+   one continuous table of contents instead of a stack of floating cards. The
+   first row has nothing above it to divide it from. */
+.list-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+    padding: var(--sp-4) 0;
+    border-top: 1px solid var(--line);
+}
+
+.list-row:first-child {
+    border-top: 0;
+}
+
+/* Everything the row says, in one shrinkable column. The row itself is a flex
+   line of [glyph] [body] [actions]; the body is what collapses, so a long title
+   wraps inside itself and never pushes the actions off the screen. */
+.row-body {
+    display: grid;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.row-line {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.row-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.row-sub {
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--fg-mute);
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.row-glyph {
+    display: grid;
+    place-items: center;
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+    flex: none;
+    color: var(--fg-mute);
+}
+
+/* The trailing cluster of a row's actions. `flex: none` so the row can never
+   squeeze it â€” the actions keep their 44px targets and the title gives up the
+   space instead. */
+.row-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: none;
+    margin-inline-start: auto;
+}
+
+/* A tappable row title gets the whole title as its target, not just the words. */
+.row-title[href] {
+    display: block;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s ease;
+}
+
+.row-title[href]:hover {
+    color: var(--fg-dim);
+}
+
+/* A row that is itself the option â€” a chooser, where the whole line picks. The
+   same anatomy as a normal row, with the target widened to the whole line. */
+.list-row-pick {
+    width: 100%;
+    text-align: start;
+    color: var(--fg);
+    background: none;
+    border: 0;
+    border-top: 1px solid var(--line);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.list-row-pick:hover {
+    background: var(--surface-2);
+}
+
+/* A press, and not just a hover. A touch screen has no hover, so on a phone the
+   row a finger is on gave no feedback at all until the next screen appeared —
+   which reads as a lag rather than as a tap. `:active` is the only state a finger
+   can produce, so it is the one that has to be styled here. */
+.list-row-pick:active {
+    background: var(--surface-3);
+}
+
+/* A short read-only fact on a row: a direction, a frequency, a state, a
+   category. One shape for all of them, so a row of badges lines up and dims
+   together instead of each one being a differently-sized piece of grey text. */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--fg-dim);
+    white-space: nowrap;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+}
+
+.badge .icon {
+    color: var(--fg-mute);
+}
+
+.badge.danger {
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+/* ---- Forms ---- */
+
+.form {
+    display: grid;
+    gap: var(--sp-4);
+    max-width: 680px;
+    min-width: 0;
+}
+
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+    margin-top: var(--sp-1);
+}
+
+/* A group of controls that is not one in itself â€” the subtask box, a nested set
+   of pickers. Separated from the fields above it by a hairline rather than by
+   more vertical space, so it reads as a part of the form. */
+.field-group {
+    display: grid;
+    gap: var(--sp-3);
+    min-width: 0;
+    padding-top: var(--sp-3);
+    border-top: 1px solid var(--line);
+}
+
+/* Two controls side by side, collapsing to one column rather than squeezing
+   both. An amount beside a date is the common case. */
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-4);
+    min-width: 0;
+}
+
+@media (min-width: 480px) {
+    .field-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ---- Search ----
+ *
+ * The magnifier and the clear button are inside the field's own box rather than
+ * beside it, so the control is still one thing to aim at and the input keeps the
+ * full width of the card.
+ */
+
+.search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.search-glyph {
+    position: absolute;
+    inset-inline-start: 12px;
+    display: grid;
+    place-items: center;
+    color: var(--fg-mute);
+    pointer-events: none;
+}
+
+.search-input {
+    padding-inline: 40px 44px;
+}
+
+/* The platform's own clear button (WebKit draws one on `type=search`) sits on
+   the same side as ours, so it is removed and ours is the only one. */
+.search-input::-webkit-search-cancel-button,
+.search-input::-webkit-search-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.search-clear {
+    position: absolute;
+    inset-inline-end: 4px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    color: var(--fg-mute);
+    background: none;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.search-clear:hover {
+    color: var(--fg);
+    background: var(--surface-3);
+}
+
+/* ---- Select ----
+ *
+ * The arrow is an icon from the registry, positioned on the logical end edge.
+ * It was a `linear-gradient` pinned to `100%`, which is the *physical* right â€”
+ * so on an Arabic page the arrow sat on the side the reader does not start from.
+ */
+
+.select {
+    position: relative;
+    display: flex;
+    min-width: 0;
+}
+
+.select select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-inline-end: 36px;
+    cursor: pointer;
+}
+
+.select-caret {
+    position: absolute;
+    inset-inline-end: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    color: var(--fg-mute);
+    pointer-events: none;
+}
+
+/* ---- Headings and counters ---- */
+
+/* The old `.counter` rule lived here until the session page became a stage: a
+   `clamp()` inside a normal page flow, competing with a heading and a toolbar.
+   `.stage-counter` below replaced it, and the number now fills whatever
+   viewport it is given. Nothing carries the old class any more. */
+
+/* ---- Session chip ---- */
+/* The active-session bar: the one thing that follows the user across every page
+   while a session is live.
+
+   It is white-on-black inverted — the one bright object on a black screen, so it
+   is findable without being read. It used to be a single link with no controls in
+   it, which meant the only way to pause a session was to open another screen and
+   find the button there. It is now a LINK and a BUTTON side by side, and the one
+   action that is always available from anywhere is the one you are most likely to
+   want: stop the clock.
+
+   A bar, not a card, on narrow screens: it spans the width above the navigation
+   rather than floating at the end edge, because a 200px card over a form is
+   already covering something and a full-width bar covers the same amount in a
+   shape the eye can find without hunting for a corner. */
+
+.session-chip {
+    display: grid;
+    gap: var(--sp-3);
+    width: min(280px, calc(100vw - 32px));
+    position: fixed;
+    inset-inline-end: calc(var(--sa-end) + 16px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 30;
+    padding: 14px 16px;
+    background: var(--fg);
+    color: var(--bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    text-align: start;
+    animation: chip-in 0.25s ease-out;
+}
+
+@keyframes chip-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.session-chip:hover {
+    transform: translateY(-50%) scale(1.02);
+}
+
+.session-chip:active {
+    transform: translateY(-50%) scale(0.98);
+}
+
+/* The link is the whole reading area of the card, and it is a sibling of the
+   button rather than its parent. A control inside an anchor is invalid markup,
+   and a browser that repairs it makes one tap mean two things — on a phone held
+   in one hand, that is the tap nobody was looking at. */
+.chip-open {
+    display: grid;
+    gap: var(--sp-2);
+    min-width: 0;
+    color: inherit;
+    cursor: pointer;
+}
+
+.chip-actions {
+    display: grid;
+    gap: var(--sp-2);
+}
+
+/* The card is white, so its own button is a black pill: the inverse of the card
+   rather than the same primary treatment every other screen uses, which would
+   disappear into it. `--tap` for the height, so it is a real target on a phone
+   and a comfortable one on a desktop. */
+.chip-toggle {
+    width: 100%;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--fg);
+    border-color: var(--bg);
+    font-weight: 600;
+}
+
+.chip-toggle:hover:not(:disabled) {
+    background: var(--surface-3);
+    border-color: var(--surface-3);
+}
+
+/* A state change this card is reporting gets one pulse. It is a `filter` and not
+   a `transform` on purpose: `.session-chip` already carries `translateY(-50%)` in
+   three different media bands, and a second transform written here would have to
+   know about every one of them. Brightness is composited, so the card does not
+   move and nothing has to be re-stated per breakpoint. */
+.session-chip[data-flash] {
+    animation: chip-flash 0.42s ease-out;
+}
+
+@keyframes chip-flash {
+    0% { filter: brightness(1); }
+    40% { filter: brightness(1.3); }
+    100% { filter: brightness(1); }
+}
+
+.chip-top {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    min-width: 0;
+}
+
+.chip-label {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* Carries `.own-text`: a task name is written in whatever language the user
+       writes in, which is usually not the one the app is showing. */
+}
+
+.chip-time {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.chip-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+}
+
+.chip-status {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chip-pct {
+    font-size: 12px;
+    font-weight: 700;
+    flex: none;
+}
+
+/* Below the header breakpoint the card cannot sit at half height on the end edge
+   without covering content, so it becomes a BAR across the width, docked above
+   the add button. A bar rather than a small card: a control that has to be
+   hunted for is a control that does not get used, and this one now carries the
+   pause button, which is the thing a person reaching for it actually wants. */
+@media (max-width: 1023px) {
+    .session-chip {
+        top: auto;
+        bottom: calc(var(--fab-h) + var(--bar-h) + var(--sab) + 10px);
+        transform: none;
+        inset-inline: calc(var(--sa-start) + 12px);
+        width: auto;
+        padding: 10px 14px;
+        gap: var(--sp-3);
+        border-radius: var(--radius);
+        /* The reading area and the control, side by side. Stacked, the same facts
+           occupied three rows and pushed the bar 110px up the screen — a permanent
+           band across the bottom of every page. */
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+    }
+
+    .session-chip:hover {
+        transform: scale(1.01);
+    }
+
+    .session-chip:active {
+        transform: scale(0.99);
+    }
+
+    /* Inside the link, the same idea one level down: the name and the state in a
+       column at the start, the time beside them, so the bar is two rows rather
+       than three and the time is level with the name it belongs to. */
+    .chip-open {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "top  time"
+            "meta time";
+        align-items: center;
+        column-gap: var(--sp-3);
+    }
+
+    .chip-top { grid-area: top; }
+    .chip-time { grid-area: time; font-size: 1.4rem; }
+    .chip-meta { grid-area: meta; }
+
+    .chip-actions {
+        align-self: center;
+    }
+
+    .chip-toggle {
+        inline-size: var(--btn-square);
+    }
+
+    /* The word goes and the icon stays, so the button is square and the label
+       lives in the accessible name instead (see session-chip.js). */
+    .chip-toggle .chip-toggle-text {
+        display: none;
+    }
+}
+
+/* A phone on its side has about 360px of height, and every band taken off it is
+   a band taken off the number the bar is reporting. So it is shorter, and it keeps
+   the offset that clears the add button rather than a tighter one — the button is
+   at the bottom corner and the bar is full width, so "tighter" here means "on top
+   of each other". */
+@media (orientation: landscape) and (max-height: 560px) {
+    .session-chip {
+        inset-inline: auto calc(var(--sa-end) + 12px) auto calc(var(--sa-start) + 12px);
+        width: auto;
+        padding: 8px 12px;
+    }
+
+    .chip-time {
+        font-size: 1.2rem;
+    }
+}
+
+/* Whether the clock is moving. The one fact the bar reports that the counter
+   cannot: a paused session shows a number too, and the dot is what says the
+   number is not advancing. Ten pixels with a soft ring rather than a bare speck,
+   because at a glance — which is how this is read — a 9px dot on a white card is
+   something to look for rather than something to see. */
+.live-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent);
+    animation: live-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+
+/* ---- Onboarding ---- */
+/* The first-run flow. Four short screens, drawn into #app before the router has
+   a page to hand out, and never reachable again once finished.
+
+   The shape is a single centred column, capped at the app's own reading measure,
+   and everything is start-aligned: this is a form and a list, and it is read
+   closely rather than across a room, so nothing here is centred except the mark
+   on the welcome screen. */
+
+.onboarding {
+    display: grid;
+    /* Centred in the viewport, not pinned to the top. The flow is a handful of
+       short screens with no scrolling, and a welcome screen that sits in the top
+       third of an empty page reads as a page that failed to load rather than as
+       an introduction.
+
+       `min-block-size` rather than `height`, and the height subtracted is the
+       main padding the flow is sitting inside, so a screen that genuinely does
+       overflow — a long Arabic string, a small landscape phone — scrolls instead
+       of clipping, and a short one is still optically centred. */
+    align-content: center;
+    justify-items: stretch;
+    gap: var(--sp-5);
+    width: min(520px, 100%);
+    min-block-size: calc(100dvh - var(--sp-5) - var(--sp-6));
+    margin-inline: auto;
+    padding-block: var(--sp-4);
+    min-width: 0;
+}
+
+/* The Back control on a step. Quiet, and out of the way at the start of the
+   column — it is the way back out of a screen, not a thing to be drawn to, and
+   an outlined button at the top of every step gives the flow four equal-weight
+   headers where it has one. */
+.ob-back {
+    justify-self: start;
+    margin-block-start: calc(var(--sp-2) * -1);
+}
+
+/* The welcome screen's mark and title, the only centred thing in the flow: it is
+   the one screen with nothing to do but introduce, and centring it makes the
+   difference between a landing and a form. */
+.ob-hero {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    gap: var(--sp-3);
+    padding-block: var(--sp-5) var(--sp-2);
+}
+
+.ob-mark {
+    inline-size: 72px;
+    block-size: 72px;
+    border-radius: var(--radius-lg);
+}
+
+/* The one line that says what the app is. Larger and brighter than the body text
+   under it, because it is the part that is read — the paragraph below is
+   context, and at the same weight the two compete and the weaker one wins by
+   being lower. */
+.ob-lead {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    max-width: 34ch;
+}
+
+/* The space code on the "your key is ready" screen. It is a reference the user
+   may need to type on another device, so it is set in figures and separated from
+   the prose — the same treatment every other identifier in the app gets, and the
+   reason it is not part of the sentence above it. */
+.ob-code {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    word-break: break-all;
+}
+
+/* The row of actions at the end of a step. Its own block rather than a bare
+   `.toolbar` so the primary action is full width on a phone, where two buttons
+   side by side at 15px are two cramped words and one clear one. */
+.ob-actions {
+    display: grid;
+    gap: var(--sp-2);
+    justify-items: stretch;
+}
+
+.ob-actions .btn {
+    justify-content: center;
+}
+
+/* The way OUT of the last step, pinned to the bottom of the viewport.
+   The brief is seven rows of copy: one screen on a desktop, two on a phone, and
+   in Arabic often three. The button that ends the flow has to be one tap away on
+   all of them — a flow whose exit is below the fold is a flow that has to be
+   scrolled past to be escaped, which is the opposite of skippable.
+
+   Sticky rather than a fixed bar, so it is still in the page flow and still
+   reached by scrolling: it stops being pinned exactly where the content ends, and
+   there is no second element to keep in step. The opaque background is what keeps
+   a row scrolling underneath from showing through the button. */
+.ob-actions-pinned {
+    position: sticky;
+    bottom: 0;
+    padding-block: var(--sp-3);
+    background: var(--bg);
+}
+
+@media (min-width: 480px) {
+    .ob-actions {
+        grid-auto-flow: column;
+        justify-content: start;
+    }
+
+    .ob-actions .btn {
+        inline-size: auto;
+    }
+
+    /* The welcome screen centres its actions, because the mark above it is
+       centred and a left-floating button under a centred title reads as a
+       mistake. */
+    .ob-hero + .ob-actions {
+        justify-content: center;
+    }
+}
+
+/* ---- Install page ---- */
+/* One block per platform. A stack of cards rather than a stack of sections: each
+   block is a name, a sentence of steps and — for iOS only — a warning, and a
+   section heading per platform would give four headings of equal weight to a page
+   whose point is that exactly one of them applies to you. */
+
+.install-steps {
+    display: grid;
+    gap: var(--gap);
+    min-width: 0;
+}
+
+/* The platform name, with the "this is you" tag beside it. `.row-line` because
+   that is the row a title already lives in elsewhere in the app — a bare
+   `display: flex` here would be the same shape under a second name. */
+.install-steps .row-line {
+    align-items: center;
+    margin-block-end: var(--sp-2);
+}
+
+/* ---- Session panel ---- */
+
+.session-panel {
+    /* THE GRID, and it has to be declared here rather than left to inherit one.
+       Every rule below — the sticky stage, the `6fr 5fr` split from 1024px up,
+       the two children stretching to the full width — describes a two-column
+       layout, and this element was `display: block`, so none of it applied: the
+       stage sat ABOVE the work on every screen, the `grid-template-columns` was
+       computed and discarded, and the sticky offset the stage was given was the
+       only part of the design that survived. The columns the stylesheet had been
+       describing were not being drawn at any width.
+    */
+    display: grid;
+    /* One column until there is width for two. `minmax(0, …)` rather than `1fr`
+       because a grid track's default minimum is its content, and the stage's own
+       `--box` is sized against its own width — a track that sized itself to that is
+       how a page gets a horizontal scrollbar from nothing but a clock. */
+    grid-template-columns: minmax(0, 1fr);
+    /* The page's own measure, not a second one. This used to be `min(920px, 100%)`
+       inside a card of its own, so the session screen was the one screen whose
+       content stopped 130px short of the frame every other screen fills — for a
+       card around a clock, which is the last thing on this screen that needs a box:
+       the number is read from across a room and the rows beside it are read by
+       their own hairlines. `main` already caps and centres the measure, so this is
+       simply its width, and the centring comes from there rather than from a
+       `margin-inline: auto` that had to be repeated here to say the same thing. */
+    width: 100%;
+    gap: var(--sp-4);
+
+    /* NO FRAME, at any width, and that is load-bearing rather than a matter of taste.
+
+       The stage is sticky, so the work scrolls UNDER it — and a sticky box can
+       only hide what passes behind it if it has a background of its own. Inside a
+       frame that background would have to match the frame's surface AND reach its
+       full width to hide anything at all: the frame's own 16–24px of padding would
+       leave a sliver of every row scrolling past visible down each side of the
+       timer, which is worse than no timer at all.
+
+       So the timer is full-bleed and opaque, the work beside or below it is a card
+       of its own, and there is no second surface for either of them to disagree
+       with. From 1024px up nothing scrolls under the stage at all, so even that
+       background comes off — one page, one black. */
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+}
+
+/* The stage's own column, and the controls with it.
+   It exists so the stage can be a grid item in its own right: `position: sticky`
+   positions a box inside its containing block, so a stage wedged straight into the
+   panel would travel with the panel and the checklist could never scroll under it.
+   The controls are in here for the same reason rather than for their own — they
+   are what stops the clock, so they are part of what stays put with it. */
+.session-stage {
+    display: grid;
+    gap: var(--sp-3);
+    align-content: start;
+    min-width: 0;
+    position: sticky;
+    /* Directly under the header, which is itself sticky at the top. The stage is
+       a full-bleed block and its top edge has to clear the header's bottom border,
+       so the offset is the header's height rather than a gap that happens to be
+       about right. */
+    top: var(--header-h);
+    z-index: 2;
+    /* Opaque, because the checklist scrolls UNDER it. The negative margins take
+       back the padding this box adds, so the stage is not pushed down by its own
+       sticking and reaches the very top of the page when it is stuck there. */
+    padding-block: var(--sp-2);
+    margin-block: calc(var(--sp-2) * -1);
+    background: var(--bg);
+}
+
+/* The checklist and the note: one column, read up close. */
+.session-work {
+    display: grid;
+    gap: var(--sp-4);
+    align-content: start;
+    min-width: 0;
+}
+
+@media (min-width: 1024px) {
+    .session-panel {
+        /* No frame to add here any more — the whole page is frameless, which is
+           the point: a card around a clock is a box a number has to be read
+           through. */
+        /* The stage takes the larger share. It is the only thing on this screen
+           sized to be read from across a room, and a ring cut in half to make room
+           for a checklist is a ring that cannot be read from across a room. */
+        grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+        align-items: start;
+    }
+
+    .session-stage {
+        /* Beside the work rather than above it, so it needs no background to hide
+           rows passing under it — and the top offset becomes the page's own
+           breathing room instead of the header's height. */
+        background: none;
+        padding-block: 0;
+        margin-block: 0;
+        top: calc(var(--header-h) + var(--sp-4));
+    }
+
+    .session-panel .stage {
+        /* The stage stops RESERVING a screen it is not filling. That minimum is
+           right when it sits above the work and has the whole viewport to itself,
+           and here it is 200px of black between the counter and the controls under
+           it: the box kept the height while its contents sat centred inside it, and
+           the buttons fell off the bottom of it. The counter's size comes from
+           `--box` below, and the head and the wall clock are as tall as they are,
+           so with the reservation gone the stage is exactly as tall as the number,
+           its caption and its three buttons. */
+        min-block-size: auto;
+        /* And it stops being CEILED by one, which was the same mistake in the other
+           direction: the ceiling exists to keep the controls above the fold when
+           the stage is stacked above them, and in a column of its own the stage's
+           height pushes nothing anywhere. Left on, it clips a ring that is taller
+           than the ceiling by the height of its own head and wall clock — and a
+           clipped stage is a stage whose controls end up under its contents. */
+        max-block-size: none;
+    }
+
+    /* The counter's room is now a COLUMN of the page rather than the page, so
+       `--box` is sized against that column and not against the viewport. Measured
+       in vw — which is what the base rule does, and is right while the stage is
+       full-bleed — the ring asks for 48vh on a tall window and is handed a track
+       half the panel's width, so it is the one thing on the screen that does not
+       fit inside itself.
+
+       `100cqw`, and not `100%`: this length is read by a `font-size` to divide
+       the room by the string's width, and a percentage there resolves against
+       the PARENT'S FONT SIZE rather than against a width — so `100%` is 16px,
+       the counter comes out at 8px, and the page looks finished right up to the
+       one thing it exists for. The stage declares itself a container for its own
+       inline size, so the unit that means "this column" is available to it. */
+    .session-panel .stage {
+        container-type: inline-size;
+        --box: min(100cqw, 52vh, 520px);
+    }
+
+    /* A free session has no ring, so its counter is sized against the full width
+       rather than against a hole — written with the panel in the selector because
+       this rule is otherwise the same specificity as the one above and would be
+       decided by which of the two happens to come later in the file. */
+    .session-panel .stage[data-progress="false"] {
+        --box: min(100cqw, 44vh, 620px);
+    }
+}
+
+/* Everything in the work column is a full-width block, so it reads as one column
+   rather than as a stack of content-width boxes with ragged edges. The controls,
+   the checklist and the note are start aligned because they are read and tapped.
+   The stage is NOT in this list: it centres its own contents, and a rule that
+   reached into it would be the kind of cross-column coupling that makes the next
+   change to either one a reason to look here. */
+.session-panel > *,
+.session-work > * {
+    width: 100%;
+    justify-self: stretch;
+    text-align: start;
+}
+
+/* Nowhere near enough height for a counter and a checklist at once: at 360px the
+   stage is two thirds of the screen, and a sticky two thirds leaves a scroll of
+   room for the work. So on this band the page scrolls as one thing, the way it
+   always did, and the time is simply the first thing on it. */
+@media (orientation: landscape) and (max-height: 560px) {
+    .session-stage {
+        position: static;
+    }
+}
+
+/* The status line â€” "running", "paused", plus the ceiling or estimate notice when
+   one of them has been hit. It reads the same on the stage and here, because it
+   is the same element: the stage is the primary home for it and this is the
+   quiet repeat, and a session whose counter has stopped at 72 h still has to say
+   so somewhere you are already looking. */
+.status {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+    text-align: center;
+}
+
+.session-progress {
+    display: grid;
+    gap: var(--sp-3);
+}
+
+/* The four progress-bar rules that used to live here â€” `.progress-top`,
+   `.progress-pct`, `.progress-track`, `.progress-fill` â€” are gone with the bar.
+   The estimate is a ring around the counter now (`.stage-ring`), because at
+   stage size a bar is 400px wide and 8px tall and shows a percentage and
+   nothing else. */
+
+.session-stats {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    flex-wrap: wrap;
+}
+
+/* The session's controls: directly under the stage, and sized for a thumb.
+ *
+ * ONE ROW OF GLYPHS, at every width, and that is the whole change. They were
+ * full-width bars on a phone and two rows of bars from 480px up — three captions
+ * for the one number this screen exists to show, on the screen where that number
+ * is read from across a room. Three squares are the same three meanings in a
+ * third of the height, so the time keeps the top of the screen and the controls
+ * stay in one line under it whether the screen is a phone or a wall display.
+ *
+ * Not a `.toolbar`, and no card. A toolbar is a row of page-level actions that
+ * wrap and share a line, which is right for "Back / Save" under a form and wrong
+ * for the two or three buttons a person presses while looking at something else.
+ * A card would box them against the details card below and make two panels of
+ * equal weight where only one is acted on — so the controls sit on the page
+ * surface, with space around them, and the stage above is the only thing on this
+ * screen with a frame.
+ *
+ * `grid-auto-flow: column` with a fixed track is the reason a wrap cannot happen
+ * at all: a toolbar's `flex-wrap` moves the destructive button to the first line
+ * on a narrow screen, which is how a cancel ends up under a thumb, and no amount
+ * of care at a call site fixes it. A grid has no such behaviour, which is the only
+ * reason this block is not a `.toolbar`. The order in the DOM is the order they are
+ * pressed in — pause or resume, then finish, then cancel — and a grid never
+ * reverses it.
+ *
+ * Start-aligned rather than centred: on a wide screen this row sits at the top of
+ * the work column beside the stage, and the checklist and the card under it are
+ * both start-aligned, so a centred row of three would be the one thing on the
+ * column that is not lined up with anything.
+ */
+.session-controls {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: var(--btn-square);
+    align-items: center;
+    /* Deliberately not boxed. The separation from the stage above and the details
+       below is whitespace, which is what says "these are the controls" without
+       giving them the same visual weight as a panel of data. */
+    gap: var(--sp-3);
+    padding-block: var(--sp-1);
+}
+
+.session-controls .btn {
+    /* Taller than `--tap`. This is the button that gets pressed without aiming,
+       while the user's attention is on the task and not on the screen. */
+    inline-size: var(--btn-square);
+    block-size: var(--btn-square);
+    min-height: var(--btn-square);
+    padding: 0;
+    /* A square, not a circle and not a bar: the same radius as every other
+       control in the app, so a row of three reads as three of one kind. */
+    border-radius: var(--radius);
+}
+
+/* One step up the icon ladder from a control in a list row, because these are the
+   largest controls on the page and there are three of them rather than eight. */
+.session-controls .btn .btn-icon {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+}
+
+/* A figure with its name above it. The unit every screen reports numbers in â€”
+ * reports, the finance overview, a debt's totals, a session's elapsed and
+ * remaining. One component, so a figure looks the same wherever it is read. */
+.stat {
+    display: grid;
+    gap: 2px;
+    text-align: start;
+    min-width: 0;
+}
+
+.stat-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+    min-width: 0;
+}
+
+.stat-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* A row of short figures. One column on a very narrow screen, growing with the
+   width rather than the count: these are label-over-value pairs, not prose, so
+   they stay side by side as soon as two will fit, and the grid takes more columns
+   as there is room.
+ *
+ * Three columns is the ceiling on purpose. The page frame is capped at 1180px, so
+ * a card inside it is never wider than about 580px â€” a fourth column there would
+ * be 130px of width for a label like "Active days (last 7)", which wraps into
+ * three lines and stops being a figure and starts being a paragraph. The
+ * full-width panels (a debt's totals) get the same three. */
+.stat-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-4);
+    min-width: 0;
+}
+
+@media (min-width: 400px) {
+    .stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .stat-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* Four figures that belong together. Two across from the narrowest useful width
+   and FOUR on a wide one, never three: the whole point of this modifier is that
+   a fixed set of four lands as a row rather than as 3 + 1, and an orphan figure
+   on a row of its own stops reading as the fourth of a set and starts reading as
+   a section of its own. `.pairs` is more specific than the rules above rather
+   than written after them, so the count is pinned rather than merely last. */
+.stat-grid.pairs {
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 400px) {
+    .stat-grid.pairs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .stat-grid.pairs {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.note-input {
+    min-height: 120px;
+}
+
+/* The current-session page is the one place the timer may use the whole
+   viewport, so it drops the page padding and centres the panel.
+
+   The padding is also what stops the stage from touching the sticky header: the
+   stage is a full-bleed block, and with no padding above it the ring's top edge
+   sat under the header's bottom border on a short viewport. */
+.current-session-page {
+    padding-block: var(--sp-3);
+}
+
+/* ---- Session checklist ---- */
+
+/* The checklist and the subtask box are the same component: a caption, a list of
+   checkbox rows, and a remove control on each. One heading class for both, so a
+   task's subtasks and a session's checklist read identically. */
+.check-head {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+    margin-bottom: var(--sp-2);
+}
+
+.check-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: var(--tap);
+    padding: var(--sp-2) 0;
+    border-top: 1px solid var(--line);
+    cursor: pointer;
+}
+
+.check-row:first-child {
+    border-top: 0;
+}
+
+.check-row input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    min-height: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.check-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* A checklist item that cannot be ticked â€” the record of a session that is
+ * over. The same row as a live checklist row, with the tick replaced by a dash,
+ * so the two read as one list. */
+.check-glyph {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    flex: none;
+    color: var(--fg-mute);
+}
+
+.check-row.done .check-glyph {
+    color: var(--fg);
+}
+
+.check-row.done .check-title {
+    text-decoration: line-through;
+    color: var(--fg-faint);
+}
+
+.check-add {
+    gap: var(--sp-2);
+    margin-top: var(--sp-1);
+}
+
+.check-add input[type="text"] {
+    flex: 1 1 8rem;
+    min-width: 0;
+}
+
+/* The task form's subtask box. The same row as a checklist row â€” a field and a
+   remove control â€” with the padding tightened because these sit inside a card
+   that already has its own. */
+.subtasks-box {
+    display: grid;
+    min-width: 0;
+}
+
+.subtask-row {
+    padding: 4px 0;
+}
+
+.subtask-row input[type="text"] {
+    flex: 1 1 8rem;
+    min-width: 0;
+}
+
+/* The remove control inside a checkbox row. A square icon button like every
+   other one â€” it was a 32px target holding a bare "âœ•" character, which is both
+   a smaller tap target than anything else in the app and the only glyph on
+   screen that came from no icon set. */
+.check-remove {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    min-height: 0;
+    flex: none;
+    color: var(--fg-mute);
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.check-remove:hover {
+    color: var(--fg);
+    background: var(--surface-2);
+    border-color: var(--line);
+}
+
+/* ---- Timeline ---- */
+
+.timeline {
+    display: grid;
+    gap: 0;
+}
+
+.timeline-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2px var(--sp-3);
+    padding: var(--sp-3) 0;
+    border-top: 1px solid var(--line);
+}
+
+/* The timestamp moves beside the event once there is a column to sit in;
+   below that it stacks above it, because a 120px column of a 320px screen is
+   not a column, it is a squeeze. */
+@media (min-width: 480px) {
+    .timeline-row {
+        grid-template-columns: 108px 1fr;
+    }
+}
+
+/* ---- Toast ---- */
+
+.toast {
+    position: fixed;
+    z-index: 50;
+    left: calc(var(--sal) + 16px);
+    right: calc(var(--sar) + 16px);
+    /* Above the add button, and above the active-session bar when there is
+       one. `--bar-h` is the bar's measured height and is 0 without a session, so
+       this is the low position in the common case and a lifted one when a timer is
+       running — the one moment a toast must not sit on top of the thing the
+       toast is usually about. */
+    bottom: calc(var(--fab-h) + var(--bar-h) + var(--sab) + 16px);
+    margin-inline: auto;
+    width: min(480px, 100%);
+    padding: 12px 16px;
+    font-size: 15px;
+    text-align: center;
+    background: var(--fg);
+    color: var(--bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    animation: toast-in 0.2s ease-out;
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* Short landscape has a very little height to give away, so the bar goes to the
+   very bottom edge and the add button rides above it rather than beside it —
+   there is no room beside anything at 360px of height. The bar is still
+   measured, and so is the button. */
+@media (orientation: landscape) and (max-height: 560px) {
+    .toast {
+        bottom: calc(var(--fab-h) + var(--bar-h) + var(--sab) + 12px);
+    }
+}
+
+/* The global error banner: the same shape as a toast, so a failure looks like
+   every other transient message rather than a second, different component. */
+.toast.banner {
+    bottom: calc(var(--fab-h) + var(--bar-h) + var(--sab) + 16px);
+}
+
+/* The full-screen notice shown when another tab is upgrading the database and
+   this one has to reload. Deliberately not a dialog: nothing can be done about
+   it here, and a dismissible dialog would imply there was a choice. */
+.reload-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-content: center;
+    gap: var(--sp-2);
+    padding: 24px;
+    text-align: center;
+    background: var(--bg);
+}
+
+/* ---- Dialog ---- */
+
+.dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: grid;
+    /* `safe` is load-bearing, and it is the reason a tall dialog can still be
+       scrolled to its top. Centring an item that is TALLER than the box centres
+       the overflow in both directions: the top is pushed above the top edge and
+       the bottom below the bottom edge, and `overflow-y: auto` can scroll to
+       neither — so the dialog's own title, its first field, or its first row is
+       simply unreachable. `safe` falls back to `start` in exactly that case and
+       is `center` in every other one, which is the behaviour this wanted all
+       along.
+     */
+    place-items: safe center;
+    padding: calc(var(--sat) + 16px) calc(var(--sar) + 16px) calc(var(--sab) + 16px) calc(var(--sal) + 16px);
+    /* Dimmed rather than opaque, so the page behind still reads as the page
+       behind and the dialog reads as the only thing being asked about. */
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    animation: fade-in 0.15s ease-out;
+    overflow-y: auto;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.dialog {
+    width: min(520px, 100%);
+    /* `max-height: 100%` on a box inside a scrolling backdrop: the backdrop's
+       padding already reserves the safe areas, so the dialog may use all the
+       room that is left. Combined with `safe` centring on the backdrop above,
+       this is what makes a dialog taller than the screen scroll from its title
+       rather than from wherever its overflow happened to land. */
+    max-height: 100%;
+    display: grid;
+    gap: var(--sp-4);
+    align-content: start;
+    padding: clamp(18px, 4vw, 26px);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+/* The title and the way out of it, on one line. The close control is an icon in
+   the same corner of every screen that has one, so "how do I get out of this" is
+   the same gesture wherever the reader is. */
+.dialog-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    min-width: 0;
+}
+
+.dialog-title {
+    font-size: 18px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.dialog-head .btn.icon-only {
+    min-height: 36px;
+    margin: -6px -6px 0 0;
+}
+
+/* The caller's content, wrapped so a dialog can take a single node or a list of
+   them and so the form case has one element to find its first field in. */
+.dialog-body {
+    display: grid;
+    gap: var(--sp-3);
+    min-width: 0;
+}
+
+/* A dialog's actions sit at the end of the line, so the button that answers the
+   question is the one the eye lands on last, in either language. */
+.dialog > .toolbar {
+    justify-content: flex-end;
+    margin-top: 0;
+}
+
+.dialog-warning {
+    padding: var(--sp-3);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--danger);
+    border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+    border-radius: var(--radius-sm);
+}
+
+.dialog-error {
+    margin: 0;
+    color: var(--danger);
+    font-size: 14px;
+}
+
+/* ---- Empty states ---- */
+
+/* Nothing here yet.
+ *
+ * Every list in the app answers "no records" the same way: one large dim glyph
+ * from the registry, then the sentence. It was a bare grey paragraph under a
+ * heading in eleven places and absent from two more, and the ones that were
+ * missing left a blank screen with no explanation at all. */
+.empty {
+    display: grid;
+    justify-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-6) var(--sp-4);
+    text-align: center;
+}
+
+.empty-icon {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    color: var(--fg-faint);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+}
+
+.empty-text {
+    margin: 0;
+    max-width: 34ch;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--fg-mute);
+}
+
+/* ---- Action bar ---- */
+
+/* A screen's page-level actions, below the thing they act on. `flex-wrap` plus
+   a full-width primary is what keeps a row of three buttons from overflowing a
+   320px screen: they wrap rather than shrink, and the destructive one â€” which
+   is never the first â€” is not the one pushed off the edge. */
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+/* ---- Settings ---- */
+
+/* One setting: a glyph, a name, a line saying what it does, and the control.
+   The same row shape as a list row, so the settings screen is made of the same
+   parts as the rest of the app rather than of bare labels and stray hairlines. */
+.setting-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+    padding: var(--sp-3) 0;
+    border-top: 1px solid var(--line);
+}
+
+.setting-row:first-child {
+    border-top: 0;
+}
+
+.setting-glyph {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: none;
+    color: var(--fg-dim);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+}
+
+.setting-body {
+    display: grid;
+    gap: 2px;
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+.setting-label {
+    font-size: 15px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.setting-control {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+/* Once the row runs out of width the control drops onto its own line and takes
+   the full measure, which is the difference between a usable settings screen and
+   a squeezed one in Arabic on a small phone. */
+@media (max-width: 479px) {
+    .setting-row {
+        flex-wrap: wrap;
+    }
+
+    .setting-control {
+        flex: 1 1 100%;
+    }
+}
+
+/* The on/off control — toggleRow() in fields.js.
+ *
+ * A checkbox that is VISUALLY HIDDEN and sits beside a drawn track, because a
+ * checkbox you have to tap where the box is drawn is 13px of target where the
+ * control is 46px wide, and a settings switch is the one control on the screen
+ * that people tap with a thumb without aiming.
+ *
+ * Three decisions worth stating:
+ *
+ *   * It is a real `<input type="checkbox" role="switch">`, not a div with a click
+ *     handler. Space and Enter toggle it, it is in the tab order, and it is
+ *     announced as on and off rather than as checked and unchecked. The
+ *     `sr-only` class keeps it focusable while taking no space.
+ *   * The knob moves with `inset-inline-start`, which is a LOGICAL property, so
+ *     it travels the other way in Arabic with no direction-specific rule here and
+ *     no JavaScript that has to re-apply it when the language changes. A
+ *     `transform: translateX` here would have been the bug this project already
+ *     wrote down once, in the other direction.
+ *   * It is 46×28, which is the platform's own switch size. The drawn track is
+ *     inside the `.setting-control` box and the whole thing is a label, so the
+ *     tap target is the track plus a few pixels of slack rather than the 13px the
+ *     browser would have offered. */
+.switch {
+    display: inline-flex;
+    flex: none;
+    cursor: pointer;
+}
+
+.switch-track {
+    position: relative;
+    display: block;
+    inline-size: 46px;
+    block-size: 28px;
+    background: var(--surface-3);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-pill);
+    transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.switch-track::after {
+    content: "";
+    position: absolute;
+    inset-block-start: 2px;
+    inset-inline-start: 2px;
+    inline-size: 22px;
+    block-size: 22px;
+    background: var(--fg-mute);
+    border-radius: 50%;
+    transition: inset-inline-start 0.18s ease, background-color 0.18s ease;
+}
+
+.switch input:checked + .switch-track {
+    background: var(--fg);
+    border-color: var(--fg);
+}
+
+.switch input:checked + .switch-track::after {
+    background: var(--bg);
+    inset-inline-start: 22px;
+}
+
+/* The focus ring is on the TRACK, not on the 1px box the browser would have put
+   on the hidden input — which is why the input is a sibling and not a child. */
+.switch input:focus-visible + .switch-track {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* ---- Finance ---- */
+
+/* Sub-navigation between the four Finance areas. Scrolls rather than wraps: four
+   pills wrapped onto two rows on a 360px screen, which pushed the page's own
+   content a whole row down for a control that is one tap either way. */
+.subnav {
+    display: flex;
+    gap: var(--sp-2);
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Bleed to the page gutter so a pill that scrolls off the edge is visibly
+       cut rather than clipped flush against the text. */
+    margin-inline: calc(var(--gutter) * -1);
+    padding-inline: var(--gutter);
+    scroll-padding-inline: var(--gutter);
+}
+
+.subnav::-webkit-scrollbar {
+    display: none;
+}
+
+.subnav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+    padding: 8px 14px;
+    font-size: 14px;
+    color: var(--fg-dim);
+    white-space: nowrap;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.subnav a:hover {
+    color: var(--fg);
+    border-color: var(--line-strong);
+}
+
+.subnav a[aria-current=true] {
+    color: var(--bg);
+    background: var(--fg);
+    border-color: var(--fg);
+    font-weight: 600;
+}
+
+/* Totals the user can act on (e.g. category filters) â€” the same button as
+   everywhere else, marked with aria-pressed instead of a class. */
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    min-width: 0;
+}
+
+.chips .btn[aria-pressed=true] {
+    color: var(--bg);
+    background: var(--fg);
+    border-color: var(--fg);
+    font-weight: 600;
+}
+
+/* ---- Two-way icon picker: income/expense, and who owes whom ---- */
+/* Left as a block on purpose: a fieldset is a special case in the layout of
+   both the legend and the border box, and nothing here needs grid. */
+.icon-picker {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.icon-picker legend {
+    padding: 0;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+}
+
+.icon-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--sp-2);
+}
+
+.icon-option {
+    display: block;
+    min-width: 0;
+    cursor: pointer;
+}
+
+/* Overrides the global `label { display: grid }`: the visible box is the face,
+   the radio itself stays screen-reader-only inside it. */
+.icon-face {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    min-height: 52px;
+    padding: 10px var(--sp-3);
+    font-size: 15px;
+    text-align: center;
+    color: var(--fg-dim);
+    background: var(--surface-2);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.icon-option:hover .icon-face {
+    color: var(--fg);
+    border-color: var(--fg-faint);
+}
+
+.icon-option input:checked + .icon-face {
+    color: var(--bg);
+    background: var(--fg);
+    border-color: var(--fg);
+    font-weight: 600;
+}
+
+/* The radio is visually hidden, so the focus ring has to be drawn on the face
+   the pointer would see â€” and inverted, because the face is now white. */
+.icon-option input:focus-visible + .icon-face {
+    outline: 2px solid var(--bg);
+    outline-offset: 2px;
+}
+
+/* The word on the face. Allowed to wrap and to shrink, because a picked face is
+   inverted and a wrapped line on a white background is far more noticeable than
+   the same wrap on grey. */
+.icon-face-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* ---- Person picker ----
+ *
+ * The chosen person's name, then the two things you can do about it. A name that
+ * can be long (and is longer in Arabic) gets the room; the controls are fixed
+ * size, and the whole thing wraps to its own line on a narrow screen rather than
+ * squeezing the name into nothing. */
+.who-picker {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.who-name {
+    flex: 1 1 6rem;
+    min-width: 0;
+    font-size: 15px;
+    color: var(--fg-dim);
+    overflow-wrap: anywhere;
+}
+
+/* ---- Later ---- */
+
+/* A pasted thought, a quote, a long url: the row shows the first lines and
+   stops there, because the whole text is one tap away on the item's own page.
+   Without this a single long entry would push every other row off the screen. */
+.row-sub.later-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+/* ---- Pages ----
+ *
+ * A page is a document with rows in it, and the rows come in four shapes: two that
+ * hold words, one that is only a rule, and the pointer rows (which are the kit's
+ * own `.list-row` and need nothing here). The three that need styles all share one
+ * line anatomy: glyph, then what the line is, then its actions. So a heading, a
+ * paragraph and a divider line up down the page and the action columns sit in the
+ * same place on all of them.
+ *
+ * The words are a real `<textarea>` and it saves itself, so the styling problem is
+ * not the box but the box's edges: an editable line must not look like a form
+ * field dropped into a document. Hence `background: none` and a border that only
+ * appears on hover or focus. A document's own text has no box around it, and a
+ * page of twenty boxed inputs stops reading as one page.
+ */
+
+.page-line {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    min-width: 0;
+    padding: var(--sp-2) 0;
+    border-top: 1px solid var(--line);
+}
+
+.page-line:first-child {
+    border-top: 0;
+}
+
+/* The same glyph box a list row has, so a page reads as a list rather than as a
+   stack of text boxes with a stray icon beside each one. */
+.page-glyph {
+    display: grid;
+    place-items: center;
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+    flex: none;
+    color: var(--fg-mute);
+}
+
+/* A divider: the rule, and the space around it. Its own actions are still on the
+   line, because a rule in the middle of a page is a thing you may well want to
+   move or take out. */
+.page-rule {
+    flex: 1 1 auto;
+    min-width: 0;
+    align-self: center;
+    border-top: 1px solid var(--line-strong);
+}
+
+.page-line-divider {
+    align-items: center;
+    padding: var(--sp-3) 0;
+}
+
+/* The editable text of a line. A heading is one line and a paragraph is a short
+   block, and both grow from the top: a textarea that grows downward pushes the
+   lines below it out of the frame the moment it takes focus.
+   Sizing moved to `.md`, which is this field's real parent since it became a
+   formatting editor — a grid child cannot be sized with `flex`, and leaving the
+   properties here would have been a rule that quietly does nothing. */
+.page-text {
+    min-width: 0;
+    min-height: 0;
+    padding: var(--sp-2);
+    background: none;
+    border-color: transparent;
+    resize: vertical;
+    overflow-wrap: anywhere;
+}
+
+.page-text:hover {
+    border-color: var(--line);
+}
+
+/* A heading is one line of the document and a paragraph is a short block, so the
+   two differ in weight and in how tall they start — not in the box they sit in.
+   Keyed off the line, so a new kind of words would not need a class of its own
+   just to look different. */
+.page-line-heading .page-text {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+/* ---- Rich text ----
+ *
+ * Two things live here, and they are different jobs.
+ *
+ * `.prose` is the READ side: a block of the user's own text, formatted. It exists
+ * because the app has exactly one text parser (domain/rich-text.js) and this is
+ * the only place its output is turned into elements, so a page line, a later note
+ * and a code span all read the same way. Nothing here is a heading: a heading is
+ * a page line of its own kind, and prose deliberately stays below the page title
+ * in the hierarchy, which is why emphasis is `<strong>`/`<em>` and never an `<h*>`.
+ *
+ * `.md` is the WRITE side: a textarea with a bar of formatting buttons above it
+ * and a live preview below. The two rules that matter are `:focus-within` and the
+ * `display: none`, and they are here rather than in JavaScript for a reason — a
+ * page can hold a thousand lines. A thousand toolbars and a thousand rendered
+ * paragraphs in the document is a thousand times the work for controls nobody is
+ * looking at, so they cost nothing until the one field being edited is focused.
+ */
+
+.prose {
+    display: grid;
+    gap: var(--sp-2);
+    min-width: 0;
+    color: var(--fg);
+    line-height: 1.6;
+    /* A long unbroken word (a url pasted as text) must not widen the page. */
+    overflow-wrap: anywhere;
+}
+
+.prose-p {
+    margin: 0;
+    min-width: 0;
+}
+
+.prose-list {
+    display: grid;
+    gap: var(--sp-1);
+    margin: 0;
+    /* The marker sits outside the text, and in the reading direction — a list
+       must not reverse in Arabic, so the indent is the logical one. */
+    padding-inline-start: var(--sp-5);
+}
+
+.prose-quote {
+    margin: 0;
+    padding-inline-start: var(--sp-3);
+    border-inline-start: 2px solid var(--line-strong);
+    color: var(--fg-dim);
+}
+
+.prose-code {
+    padding: 0 4px;
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 0.92em;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+}
+
+.prose-link {
+    color: var(--fg);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: var(--fg-mute);
+}
+
+/* A link in the user's own words is underlined the moment it exists, so a
+   preview never shows a sentence where the reader cannot tell what is clickable.
+   Hovering deepens it rather than changing it. */
+.prose-link:hover {
+    text-decoration-color: var(--fg);
+}
+
+.md {
+    display: grid;
+    gap: var(--sp-2);
+    /* The grid child that the surrounding line or form is laid out around: a
+       textarea cannot shrink a flex parent on its own, and this is what stops a
+       long word from widening the row. */
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.md-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    flex-wrap: wrap;
+}
+
+/* Only the field being edited has a bar, and only while it is being edited. See
+   the block comment: this is the rule that keeps a thousand lines cheap. */
+.md:not(:focus-within) .md-bar,
+.md:not(:focus-within) .md-preview {
+    display: none;
+}
+
+.md-preview {
+    padding: var(--sp-2);
+    background: var(--surface);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-sm);
+    /* A visual echo of a field the reader is already inside, so it is dimmed: it
+       should read as "this is what it will look like", not as a second copy of
+       the note competing with the one being written. */
+    color: var(--fg-dim);
+}
+
+/* ---- A form's hidden half ------------------------------------------------
+ *
+ * A group of fields that is not on screen until somebody asks for it, and the
+ * button that asks.
+ *
+ * It is not a "show more" text link and it is not a collapsible section: it is
+ * the same fields with the same reads, held back until they are wanted. Which is
+ * why the button keeps a fixed place in the form and the body appears UNDER it,
+ * so opening it pushes the rest of the form down instead of covering it — a form
+ * that grows is a form the person can still see all of.
+ *
+ * The chevron turns because the state is worth showing to somebody who is not
+ * using a screen reader; `aria-expanded` on the button is what says it to somebody
+ * who is, because the label does not change when the button is pressed. */
+.more {
+    display: grid;
+    gap: var(--sp-3);
+}
+
+.more-toggle {
+    justify-self: start;
+    /* Quiet, and small: this is the least interesting control on the screen, and
+       it sits directly under the field the person is looking at. */
+    min-height: var(--tap);
+    margin-inline-start: calc(var(--sp-2) * -1);
+}
+
+.more-toggle .icon {
+    transition: transform 0.18s ease;
+}
+
+.more-toggle[aria-expanded="true"] .icon {
+    transform: rotate(180deg);
+}
+
+.more-body {
+    display: grid;
+    gap: var(--sp-3);
+    /* One short entrance, on the fields rather than on the button: the button is
+       where the finger already is, and what arrived is the fields. Collapsed with
+       everything else by `prefers-reduced-motion` (see base.css). */
+    animation: more-in 0.18s ease-out;
+}
+
+@keyframes more-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* ---- Large targets ----
+ *
+ * A glyph, a name, and an optional line saying what it will do â€” the control for
+ * "these four things, pick one". The share chooser has four of them; the home
+ * screen has two, with no hint line. One component, so the two screens read as
+ * the same design, and a second place to add a target never means a second
+ * style.
+ */
+
+.target-grid {
+    display: grid;
+    gap: var(--sp-3);
+    grid-template-columns: 1fr;
+    min-width: 0;
+}
+
+@media (min-width: 480px) {
+    .target-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Four across, once there is width for four: `fill` is a grid of a handful of
+   things a person chooses between, and side by side is what "pick one of these"
+ * means when there is room for them. */
+@media (min-width: 640px) {
+    .target-grid.fill {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* The grid that IS the body of a `pageTall` screen: its tiles take the height it
+ * is given instead of the height a word needs, so the target is as large as the
+ * screen allows — a wall display gets four big glyphs, a phone gets four thumbs. */
+.target-grid.fill {
+    block-size: 100%;
+    min-block-size: 0;
+}
+
+.target-grid.fill .target {
+    align-content: center;
+    justify-items: center;
+    text-align: center;
+    gap: var(--sp-3);
+    min-block-size: 0;
+    padding: var(--sp-4);
+    /* The tile is a container for its own size, so the glyph inside it can be a
+       share of THE TILE rather than of the viewport. That is the only way one rule
+       serves both shapes this screen has: two rows of small tiles on a phone, one
+       row of large ones on a wall display, where the same share of the viewport is
+       too big for the first and too small for the second. */
+    container-type: size;
+}
+
+.target-grid.fill .target-glyph {
+    /* A circle, because a filled tile with a rounded-square plate in the middle
+       of it is two shapes saying the same thing. A share of the tile's own height,
+       capped so a very tall screen cannot draw a disc wider than the tile it is
+       drawn in. */
+    width: min(38cqh, 232px);
+    height: min(38cqh, 232px);
+    border-radius: 50%;
+    background: none;
+}
+
+/* One step above `--icon-lg`, for the same reason the tile grew: this is the
+   largest glyph in the app and it is drawn on the same 24×24 grid as every other
+   one, so it only ever occupies more of the screen, never more of the line. A
+   share of the plate it sits in, which is what keeps the stroke reading at the
+   same weight at every tile size. */
+.target-grid.fill .target-glyph .icon {
+    width: min(52%, 116px);
+    height: min(52%, 116px);
+}
+
+.target-grid.fill .target-name {
+    font-size: 15px;
+    text-wrap: balance;
+}
+
+/* The short band: two rows of tiles on a screen with about 360px of height to
+   spend. There is nothing about the glyph to restate here, which is the point of
+   sizing it against its own tile rather than against the viewport: the tile is
+   short, so the glyph is short, and the tiles are still the whole screen. What
+   does change is the space around the two, which on a 75px tile is the difference
+   between a circle with a name under it and a circle with the name touching it. */
+@media (orientation: landscape) and (max-height: 560px) {
+    .target-grid.fill .target {
+        gap: var(--sp-2);
+        padding: var(--sp-3);
+    }
+}
+
+.target {
+    display: grid;
+    align-content: start;
+    align-items: start;
+    /* `justify-content` and not `justify-items` alone: the card inherits
+       `justify-content: center` from .btn, which on a grid centres the *track* â€”
+       and an auto-sized track is exactly as wide as the glyph in it, so the
+       glyph landed in the middle of the card while its name sat at the start. */
+    justify-content: stretch;
+    justify-items: start;
+    gap: var(--sp-2);
+    min-width: 0;
+    min-height: 96px;
+    padding: var(--sp-4);
+    text-align: start;
+    white-space: normal;
+    color: var(--fg);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.target:hover {
+    background: var(--surface-2);
+    border-color: var(--line-strong);
+}
+
+.target:active {
+    transform: scale(0.99);
+}
+
+.target-glyph {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    color: var(--fg);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+}
+
+.target-name {
+    font-size: 16px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.target-hint {
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--fg-mute);
+    overflow-wrap: anywhere;
+}
+
+/* The home screen's money row: two targets, and no hint line, so they are
+   shorter than the share chooser's four and sit side by side from the start. */
+.target-grid.compact .target {
+    min-height: 72px;
+    gap: var(--sp-1);
+}
+
+/* What was shared, so the four targets are chosen against the real content
+   rather than in the abstract. Clamped, because a shared page can be a whole
+   article and the choice is made from the first lines. */
+.share-preview-text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--fg-dim);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+/* ---- Narrow screens ----
+ *
+ * The one rule that makes a row survive a small phone. A row is a flex line of
+ * [glyph] [body] [actions]; on a narrow screen the actions drop to their own
+ * line, aligned to the end, and the body takes the full width above them.
+ *
+ * This is the change that lets rows carry icons instead of words. Four text
+ * buttons plus a date plus a title cannot share a 320px line â€” the actions wrap
+ * into the middle of the title, which is what used to happen on every list in
+ * the app in Arabic. Four square icon buttons take 176px, so the body gets
+ * everything else and the row stays one readable block.
+ */
+@media (max-width: 479px) {
+    .list-row {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .row-body {
+        flex: 1 1 100%;
+    }
+
+    .row-actions {
+        margin-inline-start: auto;
+    }
+}
+
+/* The leading glyph is the first thing that can go on a very narrow screen: it
+   is decorative next to a title that is already a link, and it is the only part
+   of a row that carries no information of its own. It goes at the width below
+   which a word beside a glyph is not a thing that fits anywhere in the app. */
+@media (max-width: 359px) {
+    .row-glyph {
+        display: none;
+    }
+}
+
+/* ---- Today's time, against the user's own average ------------------------- */
+/* One bar and one tick. The bar is today; the tick is the day this user usually
+   keeps, derived from their own history (see expectedDailyMs) rather than from a
+   goal they were asked to set in advance.
+
+   The two figures are written out in words underneath, so this is the SHAPE of a
+   comparison rather than the only way to read one — which is why the track is
+   aria-hidden as an image and the axis carries the words. */
+.time-meter {
+    display: grid;
+    gap: var(--sp-2);
+}
+
+.time-meter-track {
+    position: relative;
+    block-size: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-3);
+    border: 1px solid var(--line-soft);
+    overflow: hidden;
+}
+
+.time-meter-fill {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    block-size: 100%;
+    inline-size: var(--fill, 0%);
+    background: var(--fg-mute);
+    transition: inline-size 160ms ease;
+}
+
+/* The tick sits ON the track rather than beside it, so "the bar has passed the
+   mark" is one glance and needs no reading of two separate positions. A filled
+   day covers it, and that is the point: the mark is behind the bar, which is
+   what being past it looks like. */
+.time-meter-mark {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: var(--mark, 0%);
+    inline-size: 2px;
+    background: var(--fg);
+}
+
+.time-meter-axis {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    font-size: 11px;
+    color: var(--fg-mute);
+    font-variant-numeric: tabular-nums;
+}
+
+.time-meter-axis span:last-child {
+    color: var(--fg-dim);
+}
+
+/* ---- The session stage --------------------------------------------------- */
+/* The session page is looked at from across a desk, so the time is the page
+   rather than a widget inside one. Everything here exists to make one number
+   the largest thing that fits without ever overflowing — on a phone, a laptop,
+   or a display hung on a wall.
+
+   THE SIZING IS DERIVED, NOT CHOSEN, and that is the whole design.
+
+   The obvious way to size a display counter is a `clamp()` against the
+   viewport, and it is wrong here, because an elapsed time is not one string.
+   "0:04" is four characters and 1.6em wide. "72:00:00" — the ceiling this app
+   caps at, so the string is possible — is eight characters and 3.2em wide. A
+   counter sized while the session is young therefore fits perfectly for an
+   hour and then spills out through the ring it was drawn to sit inside: twice
+   the width, on exactly the display it was drawn to be read from. No test sees
+   it, because the only moment it is true is a moment a fixture does not hold.
+
+   So the size comes from two facts and nothing else: how much room there is,
+   and how many characters are in the string.
+
+     --box   the ring's outside diameter, or the counter's own width allowance
+             when there is no ring. The room.
+     --hole  the room, less the ring's thickness. What the digits may use.
+     --len   the string's width in em, for the character count the component
+             wrote into `data-len`. Measured, not guessed: the figures below
+             are the real advance widths of this font at weight 200, and they
+             are what makes the division exact rather than approximate.
+
+   The counter's font size is then `room / width`, which is by construction the
+   largest size that cannot overflow — for every string the app can produce, at
+   every viewport, with no case to remember. */
+.stage {
+    --ring: 10px;
+    /* The ring's share of the VIEWPORT HEIGHT, not of the panel: this page has to
+       hold the time AND the controls that stop it on one screen, so the ring is
+       sized against what is left after the head, the padding and roughly a row of
+       buttons. Sized against the panel instead — which is what it used to be, at
+       60vh — it filled the screen and pushed both controls and their row below the
+       fold on every laptop, which is the one thing this screen cannot do. */
+    --box: min(70vw, 48vh, 600px);
+    --hole: calc(var(--box) - 2 * var(--ring));
+    --len: 2.0;
+    --counter-max: 22rem;
+
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: var(--sp-4);
+    /* The stage leads and the controls follow it on the SAME screen. The floor
+       is a minimum for a viewport with height to spare; the ceiling is what keeps
+       the controls above the fold on one that does not. Neither is the whole
+       story — `--box` above does most of the work — and these two only bound the
+       case where the ring is small and the page is not. */
+    min-block-size: min(44vh, 420px);
+    max-block-size: min(58vh, 540px);
+    padding-block: var(--sp-3);
+    text-align: center;
+    /* One entrance, on arrival. The stage appears when a session page is opened,
+       and arriving is the moment that deserves a beat of movement — it is also
+       the visual half of "this session just started", which is the one transition
+       with no previous state on screen to contrast with. */
+    animation: stage-in 0.3s ease-out;
+}
+
+/* A state the user just caused: paused, resumed, finished. The stage is the
+   largest thing on the page and the reason it was opened, so it is where an
+   answer belongs; a toast would be a second shape for the same idea, and a
+   colour on the button would be somewhere the eye is not.
+ *
+   A scale is safe here and was not safe on the chip, which carries its own
+   transform. The attribute is written by flash() in ui/dom.js and taken off
+   again, and the `prefers-reduced-motion` block in base.css collapses this along
+   with every other animation in the app. */
+.stage[data-flash] {
+    animation: stage-flash 0.42s ease-out;
+}
+
+@keyframes stage-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes stage-flash {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.035); }
+    100% { transform: scale(1); }
+}
+
+/* A free session has no estimate and therefore no ring, so its counter is sized
+   against the full width of the page instead of against a hole. The only
+   difference is the room; the arithmetic below is identical. */
+.stage[data-progress="false"] {
+    --ring: 0px;
+    --box: min(88vw, 40vh, 760px);
+}
+
+/* The advance width of an elapsed time at weight 200 with this letter-spacing,
+   in em, by character count. Colons are narrow, which is why the number is not
+   simply `count / 2`.
+
+     0:04     4 characters     1.588em
+     9:04     5 characters     1.985em
+     10:04    6 characters     2.376em
+     1:00:00  8 characters     3.175em   (also 72:00:00, the 72 h ceiling)
+
+   Eight is the last entry on purpose: anything longer cannot be produced, and
+   sizing it as eight rather than as its own count would let it overflow. */
+.stage[data-len="3"] { --len: 1.2; }
+.stage[data-len="4"] { --len: 1.588; }
+.stage[data-len="5"] { --len: 1.985; }
+.stage[data-len="6"] { --len: 2.376; }
+.stage[data-len="7"] { --len: 2.79; }
+.stage[data-len="8"] { --len: 3.175; }
+
+.stage-head {
+    display: grid;
+    gap: var(--sp-1);
+    justify-items: center;
+    max-inline-size: 34ch;
+}
+
+.stage-title {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fg);
+    line-height: 1.3;
+}
+
+/* The state of the session, and the one line under the time that has to be
+   unambiguous at a distance. It is `--fg-dim` rather than `--fg-mute`, and one
+   step larger, for the same reason the counter is: this is read at the distance
+   the counter is read at, and the grey that reads as "quiet caption" on a
+   settings row reads as "too faint to trust" when it is the only thing saying
+   whether the clock is moving. */
+.stage-status {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--fg-dim);
+    text-transform: uppercase;
+}
+
+/* The time of day, and the day it is on: the caption to the number above it.
+ *
+ * One step apart in weight and one in colour, so the eye takes the clock and
+ * leaves the date. The clock is the answer to "when did I start" — it is what
+ * makes an hour begun at 23:50 distinguishable from an hour begun at 09:50 —
+ * and the date is there to keep a session that ran past midnight honest. The
+ * date is the quieter of the two because it changes once a day and the clock
+ * changes once a minute, and a line that changes more often should not be the
+ * one you have to read past.
+ *
+ * `tabular-nums` for the same reason the counter has it: a proportional digit
+ * set makes a live clock shift sideways as the digits turn over, and this one
+ * moves under the number it belongs to. */
+.stage-now {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: var(--sp-2);
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--fg-mute);
+}
+
+.stage-now-time {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fg-dim);
+    font-variant-numeric: tabular-nums;
+}
+
+.stage-now-date {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Punctuation, not content: the divider between two values is drawn rather than
+   given a weight of its own, so the two figures read as one line of text. */
+.stage-now-sep {
+    color: var(--line-strong);
+}
+
+.stage-counter {
+    /* The one line the whole component exists for. */
+    font-size: min(calc(var(--hole) / var(--len)), var(--counter-max));
+    /* Bounded by the stage's own width, not only by the size derived from the
+       room — same reason as `max-inline-size` on the ring above. */
+    max-inline-size: 100%;
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -0.045em;
+    /* The digits must not shuffle sideways once a second. A proportional "1" is
+       narrower than a "0", so a live counter without this visibly jitters — and
+       on a display read from across a room it jitters in time with the seconds. */
+    font-variant-numeric: tabular-nums;
+    color: var(--fg);
+    white-space: nowrap;
+}
+
+/* The ring: one custom property, one gradient, no SVG and no second element to
+   keep in step with the first. */
+.stage-ring {
+    --progress: 0%;
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: var(--box);
+    /* The last word on the room, whatever `--box` was asked for. `--box` is a
+       length derived from the viewport and the stage's own share of the height,
+       and on a wide screen the stage is a COLUMN rather than the page — so the
+       value can ask for more than the column has. One line here is the difference
+       between a ring that shrinks and a ring that pushes the work off the screen. */
+    max-inline-size: 100%;
+    aspect-ratio: 1;
+}
+
+.stage-ring-fill {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(var(--line-strong) var(--progress), var(--surface-3) 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - var(--ring)), #000 calc(100% - var(--ring)));
+}
+
+.stage-ring-hole {
+    position: relative;
+    display: grid;
+    place-items: center;
+    gap: var(--sp-2);
+    inline-size: 100%;
+    block-size: 100%;
+}
+
+.stage-ring-pct {
+    /* Sized against the counter, not the viewport: the percentage is a caption
+       for the number inside the ring, and a caption sized independently is
+       right on a phone and absurd on a wall display. */
+    font-size: min(calc(var(--hole) / 12), 2.2rem);
+    font-weight: 300;
+    color: var(--fg-mute);
+    letter-spacing: -0.02em;
+}
+
+/* A wide, short viewport is the worst case for a stage: the ring wants height,
+   the head wants width, and the page has neither to spare. The stage stops
+   asking for a minimum and the box is sized against the WIDTH, so the time and
+   the button that stops it share one screen on the smallest viewport the app
+   supports.
+
+   The 240px subtracted from the height is the head, the gap, the stage's own
+   padding, the wall clock under the time and the row of controls under that. It is
+   far more than the stage's own chrome on purpose: on a 390px-tall landscape there
+   is no size at which the ring, the clock and the buttons all fit, and the buttons
+   win, because they are the only part of this page that is ever touched.
+
+   The controls need nothing here. One row of three squares is already the shape
+   this band wanted them in — it used to take three rules to make a two-row block
+   of bars into a single short row — so nothing about them is restated in this
+   media query, which is the point of putting the row in the base rule. */
+
+@media (orientation: landscape) and (max-height: 560px) {
+    .stage {
+        --box: min(30vw, calc(100dvh - 240px));
+        min-block-size: auto;
+        max-block-size: none;
+        gap: var(--sp-3);
+        padding-block: 0;
+    }
+}
+
+/* On a phone the ring IS the width, so the counter is bounded by the screen
+   rather than by the ring's share of the height — the same arithmetic against a
+   different room, which is why the counter rule above reads `--hole` and never
+   `vw`. The height terms are lower than the desktop ones because the controls
+   below take a full screen's worth of rows here, not two columns. */
+@media (max-width: 639px) {
+    .stage {
+        --box: min(82vw, 34vh, 380px);
+        min-block-size: min(32vh, 300px);
+        max-block-size: min(38vh, 340px);
+    }
+}
+/* ---- The home screen ------------------------------------------------------ */
+/* The glance. Six blocks, each of which hides itself when it has nothing true to
+   say, and none of which is a chart: a home screen you have to scroll to find out
+   what is happening today has stopped being a glance. See the note at the top of
+   ui/pages/home.js. */
+
+/* The clock. The heading IS the time and the date rather than the word "Home", so
+   the time leads at the size the page title is drawn at and the date follows it
+   as a caption — a localised date is long, and at title size it would push the
+   time off a 360px screen. */
+.home-clock {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.home-clock-time {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+
+.home-clock-date {
+    font-size: 0.5em;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--fg-mute);
+    text-transform: none;
+}
+
+.home-clock-sep {
+    font-size: 0.5em;
+    color: var(--fg-faint);
+}
+
+/* The "now" block: the running session and what is due, side by side from the
+   width two cards fit at and stacked below it. */
+.home-now {
+    display: grid;
+    gap: var(--gap);
+    min-width: 0;
+}
+
+@media (min-width: 480px) {
+    .home-now {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
+}
+
+/* One card goes in alone most days — nothing is due, or one thing is — and a lone
+   child of a two-column grid takes one column and leaves the other half of the
+   screen empty. It spans instead: the block is showing ONE thing, and a block
+   that reserves room for a second thing that is not there reads as something
+   having failed to load. */
+.home-now > *:only-child {
+    grid-column: 1 / -1;
+}
+
+/* ---- The running session, on the home screen ---------------------------- */
+/* A line, not a stage. The stage belongs to the session page; here the job is
+   only to say "one is running" and get out of the way, and a card with a very
+   large number in it would pull the eye off the day's figures it sits above.
+
+   The elapsed figure is the one thing that moves on this whole screen, so it is
+   the part that is a link â€” the way this design says "this is live". */
+.home-running {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    flex-wrap: wrap;
+}
+
+.home-running-link {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-3);
+    flex: 1 1 12ch;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+}
+
+.home-running-title {
+    font-weight: 600;
+    /* A long task name is the common case on a phone, and an ellipsis here is
+       better than a card that grows a second line every time you start a
+       session with a long title. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.home-running-time {
+    margin-inline-start: auto;
+    font-size: 20px;
+    font-weight: 300;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.home-running-link:hover .home-running-title {
+    text-decoration: underline;
+}
+
+/* A figure can be said in two other voices, using colours the palette already
+   has rather than a new accent. `.stat` was the one kit piece that took a `tone`
+   argument and had no rule for any of them, so every caller passed a class that
+   did nothing â€” the argument was documented, wired, and inert.
+
+   muted  a figure that is context beside the point, not the point itself
+   danger a figure that is a warning: money in the red, a balance you owe
+*/
+.stat.muted .stat-value {
+    color: var(--fg-dim);
+}
+
+.stat.danger .stat-value {
+    color: var(--danger);
+}
+
+/* ---- The log -------------------------------------------------------------- */
+/* A day and the lines under it. One column, however wide the screen: a log whose
+   days sat side by side would be read as columns rather than as a sequence, and
+   the sequence is the whole content. */
+.log-days {
+    display: grid;
+    gap: var(--gap);
+    min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Attachments
+
+   A strip of thumbnails, the four buttons that add to it, and the recorder
+   dialog. Three rules the rest of the file already sets and this one follows
+   rather than re-decides: the tap target is --tap, a class name says what the
+   thing IS rather than where it sits, and nothing here needs a colour the
+   palette does not have.
+   -------------------------------------------------------------------------- */
+
+.attachment-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    margin-block-start: var(--sp-2);
+}
+
+.attachment-heading {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+}
+
+.attachment-status {
+    margin: 0;
+    font-size: 13px;
+    min-height: 1.2em;
+}
+
+/* The grid is a fixed square per cell rather than a flexible column: a
+   thumbnail that changes size as names of different lengths arrive makes the
+   whole form jump under the user's thumb, and the remove button has to stay
+   under the same thumb. */
+.attachment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: var(--sp-2);
+}
+
+.attachment-thumb {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    padding: var(--sp-1);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+}
+
+.attachment-thumb-open {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    border-radius: calc(var(--radius-sm) - 2px);
+    background: var(--surface-3);
+    color: var(--fg-dim);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.attachment-thumb-open:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+.attachment-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.attachment-thumb-glyph {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-1);
+    font-size: 12px;
+    line-height: 1;
+    color: var(--fg-dim);
+}
+
+/* A described-but-absent attachment is dimmer than one whose bytes are here.
+   It is a real state — the file stayed on the device it came from — and it
+   should read as "not available here" at a glance rather than as a thumbnail
+   that failed to load. */
+.attachment-thumb[data-local="no"] .attachment-thumb-open {
+    opacity: 0.55;
+}
+
+.attachment-thumb-ext {
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    font-size: 11px;
+    color: var(--fg);
+}
+
+.attachment-thumb-time {
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+}
+
+.attachment-thumb-name {
+    font-size: 11px;
+    line-height: 1.3;
+    color: var(--fg-dim);
+    /* One line, ellipsised. A phone's camera names files "IMG_0001.jpg" and a
+       43-character name must not push the next thumbnail off the row. */
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.attachment-remove {
+    position: absolute;
+    inset-block-start: 2px;
+    inset-inline-end: 2px;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    /* 26px, not --tap: this sits ON a thumbnail rather than beside one, and a
+       44px circle on a 96px cell would cover the picture. It is still a real
+       button with an aria-label, and the row it removes is also removable by
+       opening the note again. */
+    background: rgba(0, 0, 0, 0.72);
+    color: var(--fg);
+    cursor: pointer;
+}
+
+.attachment-remove .icon {
+    width: 14px;
+    height: 14px;
+}
+
+.attachment-adders {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+}
+
+/* The recorder. The clock is the largest thing on the screen because it is the
+   only thing the user is waiting for, and the bar under it is whichever ceiling
+   is nearer — time for audio, bytes or time for video. */
+.recorder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-3);
+}
+
+.recorder-preview {
+    width: 100%;
+    max-height: 40vh;
+    border-radius: var(--radius);
+    background: #000;
+    object-fit: contain;
+}
+
+.recorder-clock {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 200;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.recorder-bar {
+    width: 100%;
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-3);
+    overflow: hidden;
+}
+
+.recorder-bar-fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--fg-dim);
+    transition: width 120ms linear;
+}
+
+/* The last 15% of either ceiling. Amber is not a token in this palette, so this
+   is the existing danger colour at low emphasis: enough to say "this is about
+   to stop" without saying "this has failed". */
+.recorder-bar-fill[data-hot="true"] {
+    background: var(--danger);
+}
+
+.recorder-meter {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 28px;
+}
+
+.recorder-meter-bar {
+    width: 4px;
+    height: 100%;
+    border-radius: 2px;
+    background: var(--surface-3);
+}
+
+.recorder-meter-bar[data-on="true"] {
+    background: var(--fg-dim);
+}
+
+.recorder-hint {
+    margin: 0;
+    text-align: center;
+    font-size: 13px;
+    min-height: 1.2em;
+}
+
+/* The viewer. A photograph is shown at the size it can be shown at and never
+   larger than the viewport; audio and video are controls, not a stage. */
+.attachment-view {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+}
+
+.attachment-view-img,
+.attachment-view-media {
+    max-width: 100%;
+    max-height: 70vh;
+    border-radius: var(--radius);
+    background: #000;
+    display: block;
+}
+
+.attachment-view-audio {
+    width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .recorder-bar-fill {
+        transition: none;
+    }
+}
+
+/* The chooser's list of what was shared. No thumbnails here on purpose — see
+   ui/pages/share.js: the bytes have just arrived and a row of half-decoded
+   images reads worse than a list. */
+.share-files {
+    list-style: none;
+    margin: var(--sp-2) 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+}
+
+.share-file {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    font-size: 14px;
+}
+
+.share-file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.attachment-field {
+    margin-block-start: var(--sp-4);
+}
+
+/* The chooser's slot for the shared files. A block of its own so the download
+   that fills it cannot move the four target cards below it: the text share is
+   savable while it fills, and a layout that shifted under the thumb would take
+   that away. */
+.share-files-slot {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin-block-start: var(--sp-2);
+}
+
+/* A row whose content is a picture. The glyph is replaced rather than joined, so
+   the row is the same height as every other one and a list of photographs lines
+   up with a list of words instead of growing a second rhythm. */
+.list-row.has-thumb {
+    align-items: center;
+}
+
+.row-thumb {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--surface-3);
+    display: grid;
+    place-items: center;
+}
+
+.row-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* The media block when it leads a form. A little more room under it, because it
+   is the first thing on the screen and the caption below it needs to read as
+   belonging to it rather than as the next field in a list. */
+.attachment-field-lead {
+    margin-block-start: var(--sp-2);
+    margin-block-end: var(--sp-4);
+}
+
+/* --------------------------------------------------------------- kanban ---
+ *
+ * The board. Four columns, side by side, filling the page frame.
+ *
+ * THE LAYOUT IS THE WHOLE ARGUMENT FOR A BOARD, so it is written out rather than
+ * left to defaults: four columns of a fluid width that fill whatever space there
+ * is, each scrolling on its own, and the page itself never scrolling. A board
+ * that scrolls as one tall page defeats the point — you cannot see "done" and
+ * "have" at the same time, and comparing them is the only reason to have a
+ * board. So the host is a fixed-height flex column, the row inside it is the
+ * thing that scrolls horizontally, and each column scrolls vertically inside its
+ * own share of the height.
+ *
+ * WHY THE CARD IS NOT A LINK
+ *
+ * A card has to be a drag handle, a button, and a link to another screen, and a
+ * `<a>` cannot be the first two without a browser dragging the link's own text
+ * out of it. So the card is an `article` that is focusable and answers Enter,
+ * and the control that actually opens the original is a real link inside it. That
+ * keeps the middle-click, "copy link address" and "open in new tab" that every
+ * other row in this app has, while leaving the card's own surface free to be
+ * picked up by a finger.
+ */
+.kanban-board-host {
+    /* The board owns the height. `100%` of nothing is auto, so this is a dvh
+       fallback: on a phone the URL bar collapses as you scroll and a vh-sized
+       board jumps by the height of that bar every time. */
+    min-height: min(70dvh, 640px);
+    height: min(70dvh, 640px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+}
+
+.kanban-board {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    /* Four equal columns, each at least as wide as a card needs and no wider
+       than a quarter of the frame. `minmax(0, 1fr)` rather than `1fr` because a
+       grid track's default minimum is its content, and one long task title would
+       otherwise push a column wider than its share and squash the others. */
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--gap);
+}
+
+.kanban-column {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    /* A column is a well, not a card: it has no shadow of its own, or four
+       shadows would fight each other for attention. */
+    overflow: hidden;
+}
+
+.kanban-column-header {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    padding: var(--sp-3) var(--sp-4);
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
+}
+
+.kanban-column-name {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+}
+
+/* The count is a figure with a name, so it is grey rather than white: it is a
+   caption on the column, not a heading. Empty when the column is empty, so a
+   zero never sits there saying "0" next to a column that plainly has nothing in
+   it. */
+.kanban-column-count {
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-mute);
+    background: var(--surface-3);
+    border-radius: var(--radius-pill);
+    min-width: 22px;
+    height: 22px;
+    padding-inline: var(--sp-2);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.kanban-column-count:not(:empty) {
+    display: flex;
+}
+
+.kanban-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    /* `auto` rather than `scroll`: on a column with three cards there is nothing
+       to scroll and a permanent scrollbar stripe would be a fifth thing to look
+       at. It appears only when the column actually overflows. */
+    overscroll-behavior: contain;
+    padding: var(--sp-2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+}
+
+/* Where a card would land. A hairline that turns bright, not a filled panel: the
+   card being carried is the thing the eye should follow, and a coloured block
+   behind it competes with the card for the same attention. */
+.kanban-list.is-drop-target {
+    border: 1px dashed var(--fg-mute);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+}
+
+.kanban-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding: var(--sp-3);
+    background: var(--surface-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    /* The card is a finger target, so the browser must not claim a vertical drag
+       on it for scrolling: that would make the board undraggable on a phone,
+       which is the exact failure this whole file exists to avoid. `pan-y` lets a
+       finger scroll the column and reserves everything else for the card. */
+    touch-action: pan-y;
+    cursor: grab;
+}
+
+.kanban-card:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* The card being carried. Dimmed in place rather than removed, so the column it
+   came from does not close up under the finger mid-drag. */
+.kanban-card.is-dragging {
+    opacity: 0.35;
+    cursor: grabbing;
+}
+
+/* A finished card is dimmed rather than hidden. It is still on today's board and
+   still worth seeing; the tone says it is not asking for anything. */
+.kanban-card-done {
+    background: var(--surface-2);
+}
+
+.kanban-card-done .kanban-card-title {
+    color: var(--fg-mute);
+}
+
+.kanban-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-2);
+}
+
+.kanban-card-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 15px;
+    line-height: 1.35;
+    /* Two lines and a clamp. A title is what the card is FOR, so it gets the
+       space, but one thirty-word task title must not make its card four times
+       the height of the cards around it and push the rest of the column down. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+/* The controls stay out of the way until the card is wanted. Kept in the layout
+   at low opacity rather than hidden, so the card does not change width when it
+   is touched, and so there is no reflow on hover. */
+.kanban-card-actions {
+    flex: none;
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 120ms ease;
+}
+
+.kanban-card:hover .kanban-card-actions,
+.kanban-card:focus-within .kanban-card-actions,
+.kanban-card:focus .kanban-card-actions {
+    opacity: 1;
+}
+
+.kanban-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1);
+}
+
+.kanban-menu {
+    border-top: 1px solid var(--line);
+    padding-top: var(--sp-2);
+}
+
+.kanban-move-title {
+    margin: 0 0 var(--sp-2);
+    font-size: 12px;
+    color: var(--fg-mute);
+}
+
+.kanban-move-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-1);
+}
+
+.kanban-move-option {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2);
+    min-height: var(--tap);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    color: var(--fg);
+    font-size: 13px;
+    text-align: start;
+    cursor: pointer;
+}
+
+.kanban-move-option.is-current {
+    border-color: var(--fg-mute);
+    background: var(--surface-3);
+}
+
+.kanban-move-glyph {
+    flex: none;
+    display: inline-flex;
+}
+
+.kanban-move-note {
+    margin: var(--sp-2) 0 0;
+    font-size: 12px;
+}
+
+/* The card that follows the finger. Fixed to the viewport and moved with a
+   transform only, so tracking a pointer across the board costs no layout. */
+.kanban-ghost {
+    position: fixed;
+    inset-inline-start: 0;
+    inset-block-start: 0;
+    /* --ghost-x / --ghost-y are the card's own position on screen, written by
+       makeGhost(), and the transform is the offset from it. */
+    transform: translate(var(--ghost-x), var(--ghost-y));
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.92;
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius);
+    border: 1px solid var(--line-strong);
+}
+
+.kanban-ghost .kanban-card {
+    cursor: grabbing;
+    border: 0;
+}
+
+/* An empty board shows the empty state INSTEAD of the four columns, not both.
+ *
+ * Four empty wells above a sentence explaining that there is nothing is two
+ * answers to one question, and the emptier of the two says the app is broken.
+ * Replacing the board rather than following it means the empty screen is one
+ * centred thought with the way in directly under it — which is what every other
+ * empty list in this app does, and what makes an empty board read as a board
+ * that is waiting rather than a board that failed.
+ *
+ * `hidden` does the work here: the page sets it when the board has cards, and
+ * `display: flex` would otherwise defeat the attribute. */
+.kanban-board[hidden] {
+    display: none;
+}
+
+.kanban-empty .empty {
+    align-items: center;
+}
+
+.kanban-empty .btn {
+    margin-top: var(--sp-4);
+}
+
+
+/* Four columns are four slivers below 640px, and a card that cannot be read is
+ * not a card. So on a phone the board becomes one scrolling row of full-width
+ * columns with snap points: one column fills the screen, the next is a swipe
+ * away, and a swipe lands squarely on a column rather than halfway between two.
+ *
+ * NOT a column switcher. Hiding three of the four behind tabs would mean a card
+ * cannot be dragged to a column that is not on screen — which, on the device
+ * where dragging is the whole point, removes the gesture entirely. Every column
+ * stays reachable by a finger, and a drag between two of them works whenever
+ * both are visible.
+ */
+@media (max-width: 639px) {
+    .kanban-board-host {
+        /* The row scrolls sideways, so the host is the scroll container and its
+           children lay out along one axis. `scroll-snap-type` on the HOST, not
+           on the board, because the host is what has the overflow. */
+        height: auto;
+        min-height: 0;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x mandatory;
+        /* Room for the card's own shadow, which a scroll container clips. */
+        padding-block-end: var(--sp-2);
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .kanban-board {
+        display: flex;
+        gap: var(--gap);
+        height: auto;
+        /* Four tracks of one screen each: the row is as wide as four phones, and
+           the container scrolls across it. */
+        width: max-content;
+        min-width: 100%;
+    }
+
+    .kanban-column {
+        /* One screen minus the gutters, so the column that has snapped into view
+           fills it exactly and the next one starts off-screen. */
+        flex: 0 0 calc(100vw - var(--gutter) * 2 - var(--sp-3));
+        scroll-snap-align: center;
+        scroll-snap-stop: always;
+        /* A column scrolls its own cards vertically on a wide screen; here the
+           page scrolls instead, so a finger dragging down a column scrolls the
+           page rather than fighting an inner scroller. */
+        max-height: none;
+    }
+
+    .kanban-list {
+        overflow-y: visible;
+    }
+}
+
+/* Below 360px there is no room to hide a card's controls until it is touched,
+ * and a control nobody can see is a control nobody finds. They are simply always
+ * there. */
+@media (max-width: 359px) {
+    .kanban-card-actions {
+        opacity: 1;
+    }
+}

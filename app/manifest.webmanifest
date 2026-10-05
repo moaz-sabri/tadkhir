@@ -1,0 +1,119 @@
+{
+    "id": "/",
+    "name": "Tadkhir",
+    "short_name": "Tadkhir",
+    "description": "A simple, local-first place for everyday tasks, sessions, expenses, subscriptions, debts, and things to revisit.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "display_override": ["standalone", "minimal-ui", "browser"],
+    "orientation": "any",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "categories": ["productivity", "utilities"],
+    "prefer_related_applications": false,
+    "share_target": {
+        "action": "/api/share/intake",
+        "method": "POST",
+        "enctype": "multipart/form-data",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url",
+            "files": [
+                {
+                    "name": "files",
+                    "accept": ["image/*", "audio/*", "video/*", ".pdf", ".txt", ".md", ".csv", ".json", ".rtf", ".epub", ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ods", ".ppt", ".pptx", ".odp"]
+                }
+            ]
+        }
+    },
+    "shortcuts": [
+        {
+            "name": "Start a session",
+            "short_name": "Session",
+            "description": "Start the timer with this as its title",
+            "url": "/quick?do=session",
+            "icons": [
+                {
+                    "src": "/icons/icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Write a note",
+            "short_name": "Note",
+            "description": "Open a note to come back to",
+            "url": "/quick?do=note",
+            "icons": [
+                {
+                    "src": "/icons/icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Record income",
+            "short_name": "Income",
+            "description": "Log money you received",
+            "url": "/quick?do=income",
+            "icons": [
+                {
+                    "src": "/icons/icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        },
+        {
+            "name": "Record an expense",
+            "short_name": "Expense",
+            "description": "Log money you spent",
+            "url": "/quick?do=expense",
+            "icons": [
+                {
+                    "src": "/icons/icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                }
+            ]
+        }
+    ],
+    "icons": [
+        {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "/icons/maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/icons/icon-192.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "/icons/icon-512.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "/icons/maskable-512.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        }
+    ]
+}
